@@ -1,0 +1,40 @@
+TODO
+
+Social features for sharing annotations. SegAnnDB currently lets a
+user login using Mozilla Persona and then add user-specific
+annotations. These annotations are currently only accessible to the
+user that creates them, but it would be nice to be able to share them
+with others. For example, Alice annotates some data then types the
+email address of her friend Bob into a web form. Bob then receives an
+email with a web link where he can view Alice's annoatations.
+
+Adminstrative features. SegAnnDB uses BerkeleyDB, which is very fast
+but makes updating and deleting profiles a bit tricky. I have started
+writing a view (plotter.views.delete_profiles) for profile deletion
+along with some database support (plotter.db.Profile.delete).
+
+Unit tests using Pyramid recommendations, for example when a profile
+is processed (plotter.db.Profile.process) test for presence of objects
+in the database, and then when the profile is deleted, check for
+deletion of relvant objects and files (PNG scatterplots,
+probes.bedGraph.gz data).
+
+Add support for browsers that do not render large PNG images. SegAnnDB
+uses very large PNGs to efficiently visualize DNA copy number
+profiles, but these are not supported by all browsers.
+http://sugiyama-www.cs.titech.ac.jp/~toby/images/
+
+Integration with Galaxy? From within Galaxy, is it possible to store
+the annotated regions in a database and display an updated
+segmentation model?
+https://wiki.galaxyproject.org/VisualizationsRegistry
+
+4 March 2014
+
+Viewing/annotating several profiles at a time.
+
+27 March 2013 
+
+Plotting large profiles with PNGs.
+
+Fitting any 0/1 breakpoint annotations using SegAnnot.

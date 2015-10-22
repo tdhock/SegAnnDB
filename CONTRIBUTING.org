@@ -1,0 +1,35 @@
+This document describes the recommended development cycle for SegAnnDB
+code.
+
+Check out a read-write copy of the code from SVN to your local
+computer.
+
+svn checkout svn://scm.gforge.inria.fr/svnroot/breakpoints/webapp/pyramid SegAnnDB
+
+To support the database and uploaded files, you need to create the
+following directories:
+
+SegAnnDB/db: BerkeleyDB files.
+SegAnnDB/chromlength: chromInfo.txt.gz files renamed to e.g. hg19.txt.gz.
+SegAnnDB/secret: uploaded profiles and scatterplots.
+
+Then set FILE_PREFIX="." in plotter/db.py. Then run
+
+bash recover-restart.sh
+
+to start a development server which uses the development.ini
+file. Make changes to the source code and then change
+FILE_PREFIX="/var/www" and then commit changes.
+
+On the production server, we configured apache2 using the sample
+apache.config file, which points to the production.ini file. To update
+the code on the production server we run
+
+bash server-update.sh
+
+Which checks out the most recent version of the code from SVN, then
+installs it, and restarts the web server. There are some other
+server-*.sh scripts that can be run as well. 
+
+WARNING: server-reinitialize.sh and reinitialize.sh will delete all
+data in BerkeleyDB.
