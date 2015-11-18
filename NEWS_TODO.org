@@ -1,5 +1,10 @@
 TODO
 
+In practice the process daemon can be inactive when there are still
+un-processed profiles. When the process daemon is idle it should check
+the list of profiles and add un-processed profiles back into the
+ProfileQueue.
+
 Social features for sharing annotations. SegAnnDB currently lets a
 user login using Mozilla Persona and then add user-specific
 annotations. These annotations are currently only accessible to the
