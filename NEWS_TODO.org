@@ -11,7 +11,14 @@ email with a web link where he can view Alice's annoatations.
 Adminstrative features. SegAnnDB uses BerkeleyDB, which is very fast
 but makes updating and deleting profiles a bit tricky. I have started
 writing a view (plotter.views.delete_profiles) for profile deletion
-along with some database support (plotter.db.Profile.delete).
+along with some database support (plotter.db.Profile.delete), but it
+is a slow O(ND) operation where T is the number of databases and N is
+the average number of items in each database. Deleting one profile
+should be an O(1) operation.
+
+BerkeleyDB accumulates log files which must be periodically deleted,
+and we should have a daemon that does this...
+http://www-rohan.sdsu.edu/doc/BerkeleyDB/ref/transapp/logfile.html
 
 Unit tests using Pyramid recommendations, for example when a profile
 is processed (plotter.db.Profile.process) test for presence of objects
