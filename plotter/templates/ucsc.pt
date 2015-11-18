@@ -1,0 +1,8 @@
+    <td tal:case="True" tal:condition="p.export=='yes'">
+      <form action="http://genome.ucsc.edu/cgi-bin/hgCustom" 
+	    method="post" enctype="multipart/form-data">
+	<input type="hidden" name="db" value="${p.db}" />
+	<input type="hidden" name="hgct_customText" value="${p.ucsc}" />
+	<input type="submit" value="UCSC" />
+      </form>
+    </td>

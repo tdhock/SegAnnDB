@@ -1,0 +1,49 @@
+<metal:main use-macro="load: base.pt">
+
+  <title metal:fill-slot="title">
+    SegAnnDB: profile ${names}
+  </title>
+
+  <div metal:fill-slot="content">
+
+
+    <div id="plot">
+
+    </div>
+
+    <p>
+      <a href="/links/${names}/">Show alterations on the UCSC
+      genome browser</a>.
+    </p>
+
+    <div tal:switch="',' in names">
+      <p tal:case="False">Download 
+	<a href="/secret/${names}.bedGraph.gz">probes.bedGraph.gz</a>
+	<a href="/export/${str(user)}/${names}/regions/bed/">regions.bed</a>
+	<a href="/export/${str(user)}/${names}/regions/csv/">regions.csv</a>
+	<a href="/export/${str(user)}/${names}/segments/bedGraph/">
+	  segments.bedGraph</a>
+	<a href="/export/${str(user)}/${names}/copies/bed/">
+	  copies.bed</a>
+	<a href="/export/${str(user)}/${names}/copies/csv/">
+	  copies.csv</a>
+	<a href="/export/${str(user)}/${names}/breaks/bed/">breakpoints.bed</a>
+	<a href="/export/${str(user)}/${names}/breaks/csv/">breakpoints.csv</a>.
+      </p>
+    </div>
+    
+    <p>
+      Go to
+      <a href="/all_profiles/">profiles list</a>
+      <a href="/">home</a>.
+    </p>
+
+    <script type="text/javascript">
+      var data = ${plot};
+      var profile = new profilePlot(data);
+    </script>
+
+  </div>
+
+</metal:main>
+

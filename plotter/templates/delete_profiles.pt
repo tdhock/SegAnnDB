@@ -1,0 +1,44 @@
+<metal:main use-macro="load: base.pt">
+
+  <title metal:fill-slot="title">
+    SegAnnDB: delete profiles
+  </title>
+
+  <div metal:fill-slot="content">
+
+    <div tal:condition="message">
+      <pre>
+${message}</pre>
+    </div>
+
+    <form action="." method="post"
+	  enctype="multipart/form-data">
+      <table class="home">
+	<tr>
+	  <th><input type="submit" value="Delete checked" /></th>
+	  <th>db</th>
+	  <th>Uploaded by</th>
+	  <th>on</th>
+	  <th>Share</th>
+	  <th>Probes</th>
+	</tr>
+
+	<tr tal:repeat="p profiles" tal:switch="p.ready">
+	  <td class="left" tal:case="True">
+	    <input type="checkbox" name="profile" value="${p.name}">
+            <a href="/profile/${p.name}/">${p.name}</a>
+      </input>
+	  </td>
+	  <td tal:case="False">
+	    ${p.name}
+	  </td>
+	  <td>${p.db}</td>
+	  <td>${p.uploader}</td>
+	  <td class="mono">${p.uploaded_on.strftime("%d-%b-%Y")}</td>
+	  <td>${p.share}</td>
+	  <td class="numeric">${p.probes}</td>
+	</tr>
+      </table>
+  </div>
+
+</metal:main>

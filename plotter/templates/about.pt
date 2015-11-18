@@ -1,0 +1,179 @@
+<metal:main use-macro="load: base.pt">
+
+  <title metal:fill-slot="title">
+    About SegAnnDB
+  </title>
+
+  <div metal:fill-slot="content">
+
+    <h2>Introduction: selecting a smoothing model using breakpoint
+    annotations</h2>
+
+    <p>The basic idea is to find a model which agrees with your visual
+      definition of a breakpoint. Our approach to segmentation uses computer
+      vision and machine learning, exploiting the strong points of your eyes
+      and mathematical models:</p>
+
+    <table class="compare">
+      <tr>
+	<th>Breakpoint detector</th>
+	<th>Strong points</th>
+	<th>Weak points</th>
+      </tr>
+      <tr>
+	<td>Your eyes</td>
+	<td>Identifying outliers, noise, and breakpoints over large regions</td>
+	<td>Finding the exact breakpoint</td>
+      </tr>
+      <tr>
+	<td>Mathematical models</td>
+	<td>Use optimization to find the breakpoints of maximum likelihood</td>
+	<td>Tuning parameters that limit the number of breakpoints, <br />and
+	  must be chosen using various heuristics</td>
+      </tr>
+    </table>
+
+    <p>Each scatterplot of probe logratio is shown with a piecewise
+      constant smoothing model. If the breakpoints detected by the
+      model are not what you expect, then you can add breakpoint
+      annotations to update the segmentation. Breakpoint annotations
+      are regions that encode your visual interpretation of the
+      signal, and were first described for segmentation model
+      selection
+      in <a href="http://www.biomedcentral.com/1471-2105/14/164">Learning
+      smoothing models of copy number profiles using breakpoint
+      annotations</a>.</p>
+
+    <h2>Model details</h2>
+
+    <p>When a profile is uploaded, each chromosome is pre-processed:</p>
+      <ul>
+	<li><a href="http://www.pythonware.com/library/pil/handbook/imagedraw.htm">Python
+	Imaging Library</a> is used to draw PNG scatterplots for
+	several zoom levels, so even high-density profiles can be
+	quickly plotted and zoomed.</li>
+	<li><a href="http://arxiv.org/abs/1004.0887">Pruned Dynamic
+	Programming (DP)</a> is used to find the optimal segmentation for
+	several model sizes.</li>
+      </ul>
+    <p><b>Optimal fitting:</b> the displayed segmentation can be
+edited by adding 0/1 breakpoint annotations on the bottom half of the
+plot. Given a set of breakpoint annotations, <b>how do we find a
+consistent segmentation?</b> The color of the displayed breakpoints
+indicates the algorithm used to find the displayed segmentation:</p>
+    <ul>
+      <li><b>green=PrunedDP</b>. After annotation, we first check if
+there are any segmentations with 0 annotation error from Pruned DP. If
+there are, we use one of those.
+</li>
+<li><b>purple=SegAnnot</b>. If there are no 0-error segmentations
+from Pruned DP,
+then <a href="http://hal.inria.fr/hal-00759129">SegAnnot</a> is used
+to find the most likely segmentation that is consistent with the given
+annotations. Thus the segmentation model is always consistent with the
+visually-defined breakpoint annotations.</li>
+</ul>
+
+
+<p><b>Optimal prediction:</b> if there are few breakpoint annotations,
+then there may be several Pruned DP segmentations which are
+consistent. For example, when there are no breakpoint annotations, all
+the Pruned DP models are consistent. In that case, <b>how do we
+predict the optimal number of breakpoints?</b> We use
+a <a href="http://jmlr.org/proceedings/papers/v28/hocking13.html">max-margin
+interval regression model learned on all the other annotated
+signals</a> to select the number of breakpoints. The breakpoint
+detection of this model gets better as you add more breakpoint
+annotations.</p>
+
+<p><b>Copy number annotations:</b> there are 5 copy number annotations:</p>
+<table class="compare">
+  <tr>
+    <td>Annotation</td>
+    <td>Approximate copy number</td>
+  </tr>
+  <tr>
+    <td>amplification</td>
+    <td>&gt;&gt;2</td>
+  </tr>
+  <tr>
+    <td>gain</td>
+    <td>&gt;2</td>
+  </tr>
+  <tr>
+    <td>normal</td>
+    <td>≈2</td>
+  </tr>
+  <tr>
+    <td>loss</td>
+    <td>&lt;2, typically 1</td>
+  </tr>
+  <tr>
+    <td>deletion</td>
+    <td>&lt;&lt;2, typically 0</td>
+  </tr>
+</table>
+  <p>Each copy number annotation is used to assign a copy number
+  status to its overlapping segment. Annotated segments are the same
+  color as the copy number annotations, and un-annotated segments are
+  green. The annotated segments of a profile are used to predict copy
+  number status for un-annotated segments on the same profile. But
+  copy number is not generalized between profiles, so you need to
+  label a few segments on each profile.</p>
+
+    <h2>Web browser compatibility</h2>
+    <p>Rendering large zoomed PNG scatterplots of high-density
+    profiles is not supported on all browsers. For example,
+    <a href="/profile/dr3hg19/2/">chr2 on profile dr3hg19</a> has
+    153,662 probes, and the following table shows which web browsers
+    can display the different zoom levels.</p>
+
+    <a name="compatibility">
+
+    <table class="compare">
+      <tr>
+	<th>Zoom level</th>
+	<th>Width (pixels)</th>
+	<th>Chrome/Safari<br/>iPad</th>
+	<th>Firefox<br/>Ubuntu/Windows</th>
+	<th>Chrome<br/>Windows</th>
+	<th>Chrome<br/>Ubuntu</th>
+      <tr>
+	<td>standard</td>
+	<td class="numeric">1,500</td>
+	<td>yes</td>
+	<td>yes</td>
+	<td>yes</td>
+	<td>yes</td>
+      </tr>
+      <tr>
+	<td>ipad</td>
+	<td class="numeric">20,000</td>
+	<td>yes</td>
+	<td>yes</td>
+	<td>yes</td>
+	<td>yes</td>
+      </tr>
+      <tr>
+	<td>1pixel_per_probe</td>
+	<td class="numeric">153,662</td>
+	<td></td>
+	<td></td>
+	<td>yes</td>
+	<td>yes</td>
+      </tr>
+      <tr>
+	<td>5pixels_per_probe</td>
+	<td class="numeric">768,310</td>
+	<td></td>
+	<td></td>
+	<td></td>
+	<td>yes</td>
+      </tr>
+    </table>
+
+    <p>Back to <a href="/">home</a>.</p>
+
+  </div>
+
+</metal:main>

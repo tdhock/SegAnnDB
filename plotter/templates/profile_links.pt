@@ -1,0 +1,59 @@
+<metal:main use-macro="load: base.pt">
+
+  <title metal:fill-slot="title">
+    SegAnnDB: profile ${names} alterations
+  </title>
+
+  <div metal:fill-slot="content">
+
+    <p>List of detected alterations
+      for <a href="/profile/${names}/">profile ${names}</a>.
+      Back to
+      <a href="/">home</a>.
+    </p>
+
+    <div tal:condition="export">
+      <p>Before clicking
+	the UCSC links below, make sure to</p>
+
+      <form action="http://genome.ucsc.edu/cgi-bin/hgCustom" 
+	    method="post"
+	    enctype="multipart/form-data"> 
+	  <input type="hidden" name="db" value="${db}" />
+	  <input type="hidden" name="hgct_customText" value="${export}" />
+	<input
+	   type="submit" 
+	   value="Send your annotations and model to UCSC"
+	   />
+      </form>
+    </div>
+
+    <table>
+      <tr>
+	<th>annotation</th>
+	<th>profile</th>
+	<th>chr</th>
+	<th>start</th>
+	<th>end</th>
+	<th>size in kb</th>
+	<th tal:repeat="z zoom">UCSC zoom out ${z}x</th>
+      </tr>
+      <tr tal:repeat="a alterations">
+	<td>${a['annotation']}</td>
+	<td class="left">${a['name']}</td>
+	<td>
+	  <a href="/profile/${a['name']}/${a['chromosome']}/">${a['chromosome']}</a>
+	</td>
+	<td class="numeric">${a['min']}</td>
+	<td class="numeric">${a['max']}</td>
+	<td class="numeric">${a['size_kb']}</td>
+	<td class="numeric" tal:repeat="z a['zoom']">
+	  <a href="http://genome.ucsc.edu/cgi-bin/hgTracks?position=chr${a['chromosome']}:${z['min']}-${z['max']}">chr${a['chromosome']}:${z['min']}-${z['max']}</a>
+	</td>
+      </tr>
+    </table>
+
+  </div>
+
+</metal:main>
+

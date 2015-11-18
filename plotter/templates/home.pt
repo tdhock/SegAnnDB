@@ -1,0 +1,99 @@
+<metal:main use-macro="load: base.pt">
+
+  <title metal:fill-slot="title">
+    SegAnnDB: interactive genomic data segmentation
+  </title>
+
+  <div metal:fill-slot="content">
+
+    <h2>Interactive genomic data segmentation on the web</h2>
+
+    <div tal:condition="plot">
+      <p>
+	Drag on the bottom half of the plot to create a new breakpoint
+	annotation, and watch as the
+	<a href="about/">model</a> updates to agree with your
+	annotations.
+      </p>
+
+      <div id="plot"></div>
+
+      <script>
+	var data = ${plot};
+	var plot = profilePlot(data);
+      </script>
+
+    </div>
+
+    <table>
+
+      <tr>
+
+	<td>
+	  <iframe width="420" height="315" 
+		  src="http://www.youtube.com/embed/BuB5RNASHjU" ></iframe>
+	</td>
+
+	<td class="text">
+
+	  <div tal:condition="plot">
+
+	    <p>If you can't see the plot above, then get a recent version
+	      of
+	      <a href="http://www.google.com/chrome/">chrome</a>
+	      or
+	      <a href="http://www.opera.com/download/">opera</a>.
+	    </p>
+
+	  </div>
+
+	  <p>
+	    &lt;- This 3-minute video tutorial explains how to update
+	    the displayed model by adding annotations. Other
+	    videos: <a href="https://www.youtube.com/watch?v=al0kk1JWsr0">zooming,
+	    annotating, and
+	    exporting</a>, <a href="https://www.youtube.com/watch?v=XIZJag4FWCs">launching
+	    a SegAnnDB AMI</a>.</p>
+
+	  <ul>
+
+	    <li tal:condition="not user">You can click the button at
+	    the top of the page to sign in. With an account, you can
+	    upload your own profiles to the database for analysis, and
+	    create your own annotations and segmentation model.
+	    </li>
+
+	    <li tal:condition="user">
+	      <a href="upload">Upload a new profile</a>.
+	    </li>
+
+	    <li>
+	      Batch download of SegAnnDB CSV data
+	      exports [<a href="/static/download.demo.R">R code</a>].
+	    </li>
+
+	    <li>
+	      <a href="/random/">Plot a random un-annotated chromosome</a>.
+	    </li>
+
+	  </ul>
+
+	</td>
+
+      </tr>
+
+    </table>
+
+    <div tal:condition="profile_count">
+      <metal:main use-macro="load: profile_table.pt">
+    </div>
+
+    <p tal:condition="profile_count > len(profiles)">
+      <a href="all_profiles/">...show all ${profile_count} profiles
+      and download links for user ${str(user)}</a>.
+    </p>
+
+  </div>
+
+</metal:main>
+

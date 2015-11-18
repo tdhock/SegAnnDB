@@ -1,0 +1,85 @@
+td.numeric {text-align: right;}
+
+td.text {text-align:left;}
+
+table {font-size:inherit;font:100%;}
+select, input, textarea {font:99% arial,helvetica,clean,sans-serif;}
+
+body * {line-height:1.5em;}
+
+* {
+    margin: 0; padding:0; 
+    font-family: Verdana, Tahoma, sans-serif; 
+}
+
+body {margin: 1em;}
+
+li, dd { margin-left:5%; }
+fieldset { padding: .5em; }
+code, pre, tt {
+  font-family: monospace; 
+  font-size: 100%;
+  border: 1px solid #ccc;
+  background-color: #DCE6CF;
+}
+td.mono {
+    font-family: monospace;
+    vertical-align: middle;
+}
+
+small {font-size: 0.8em;}
+blockquote {margin: 1em 1em; font-size: 0.9em;}
+
+code strong {font-family: monospace;}
+
+a:link, a:visited {color: #513058; }
+
+h1 {font-size: 4em; font-weight: normal; margin-bottom: 0.4em; text-transform: lowercase;}
+h2 {font-size: 1.5em; font-weight: bold}
+h3 {font-size: 0.9em; font-weight: bold}
+
+/* Colour inspiration: 
+http://wellstyled.com/tools/colorscheme2/index-en.html?compl;50;0;150;0.5;-0.9;0.5;0.5;0.1;0.9;0.75;0.75;0.5;-0.9;0.5;0.5;0.1;0.9;0.75;0.75;0.5;-0.9;0.5;0.5;0.1;0.9;0.75;0.75;0.5;-0.9;0.5;0.5;0.1;0.9;0.75;0.75;0
+
+Greens     Purples
+#DCE6CF     #E6CFE0
+#86BF30     #BF309B
+#B8E673     #B85CA1
+#668040     #804070
+*/
+
+a:link, a:visited {color: #804070;}
+a:hover {background-color: #DCE6CF }
+
+td.caption {font-size: 0.9em; color: #333; padding: 4px; background-color:#e9e9e9;}
+
+.box {
+    margin: auto;
+    border-left: 5px solid #668040;
+    background-color: #DCE6CF;
+}
+.box p {margin: 0.3em 0;}
+
+.box, h1 {
+    padding: 1px 0 1px 5px;
+}
+
+h1 {
+    border-left: 8px solid #804070;
+    margin-left: -23px;
+    padding-left: 10px;
+}
+
+
+h1 {margin-bottom: 0;}
+/* Table formatting -------------------- */
+table.about td {padding:6px;}
+table {border-collapse: collapse; margin-bottom: 1.5em;}
+td, th {vertical-align: top;  }
+td.left {text-align: left; }
+th {text-align: center; }
+table.compare th {padding: 5px; }
+table.compare td {padding-right: 5px; border: 1px solid grey; }
+table.home td {padding-left: 2px; padding-right: 2px; align: right;}
+tr.first td {padding-top: 1em;}
+

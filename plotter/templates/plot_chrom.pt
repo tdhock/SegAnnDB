@@ -1,0 +1,37 @@
+<metal:main use-macro="load: base.pt">
+
+  <title metal:fill-slot="title">
+    SegAnnDB: profile ${name} chr${chr}
+  </title>
+
+  <div metal:fill-slot="content">
+
+
+    <div id="plot">
+
+    </div>
+
+    <p>
+      This is chr${chr} of profile ${name}.  Plot size:
+	<a tal:repeat="z others" href="?width=${z}">
+	  ${z}</a>.
+      <a href="/links/${name}/">Show alterations on the UCSC genome
+      browser</a>.
+    </p>
+    <p>
+      Go to
+      <a href="/">home</a>
+      <a href="/profile/${name}/">profile ${name}</a>
+      <a href="/random/">an un-annotated chromosome</a>.
+    </p>
+
+    <script type="text/javascript">
+      var data = ${plot};
+      var profile = new profilePlot(data);
+    </script>
+
+  </div>
+
+
+</metal:main>
+

@@ -1,0 +1,124 @@
+<metal:main use-macro="load: base.pt">
+
+  <title metal:fill-slot="title">
+    SegAnnDB: upload profile
+  </title>
+
+  <div metal:fill-slot="content">
+
+    <p>Please upload your profile data to segment as a
+      gzipped <a href="http://genome.ucsc.edu/goldenPath/help/bedgraph.html">bedGraph</a>
+      file:</p>
+
+    <pre>
+track type=bedGraph db=hg19 name=nb1 export=yes description="Neuroblastoma 1 aCGH logratio" share=public maxSegments=20 visibility=full alwaysZero=on graphType=points yLineMark=0 yLineOnOff=on 
+chr1 809681 809690 0.447843644362086
+chr1 928433 928460 0.462575888042204
+chr1 987423 987454 0.500802053057158
+...</pre>
+
+    <p>The columns are: chromosome, chromStart, chromEnd, signal. For
+      accurate analysis and interpretation, please verify
+      that <a href="http://genome.ucsc.edu/FAQ/FAQtracks.html#tracks1">chromStart
+	is 0-based and chromEnd is 1-based in bedGraph files</a>. That is, the
+      first base in the interval is labeled on UCSC as chromStart+1, and the
+      interval contains all bases up to AND INCLUDING the chromEnd base.
+    </p>
+
+    <ul>
+      <li>Example 1: your signal comes from
+	the <a href="http://genome.ucsc.edu/cgi-bin/hgTrackUi?g=genotypeArrays">Agilent
+	  SurePrint G3 Human CGH Microarray 1x1M AMADID 021529</a>. One of the
+	probes is
+	named <a href="http://genome.ucsc.edu/cgi-bin/hgTracks?position=A_16_P21235033">A_16_P21235033</a>. This
+	probe's sequence is TGACCC...TAAAAC, which is labeled on the browser
+	as <a href="http://genome.ucsc.edu/cgi-bin/hgTracks?position=chr21:33036221-33036280">chr21:33036221-33036280</a>,
+	but the bedGraph format for this location
+	is <a href="http://genome.ucsc.edu/cgi-bin/hgTracks?position=chr21
+		    33036220 33036280">chr21 33036220 33036280</a>! Note the bedGraph
+	chromStart is 1 base less than the display chromStart!</li>
+      <li>Example 2: your signal is log counts of sequences found in 1kb
+	windows evenly spaced throughout the genome. The first window on
+	chromosome 1 is displayed on the browser
+	as <a href="http://genome.ucsc.edu/cgi-bin/hgTracks?position=chr1:1-1000">chr1:1-1000</a>
+	= bedGraph
+	format <a href="http://genome.ucsc.edu/cgi-bin/hgTracks?position=chr1
+			0 1000">chr1 0 1000</a>. The second window is
+	<a href="http://genome.ucsc.edu/cgi-bin/hgTracks?position=chr1:1001-2000">chr1:1001-2000</a>
+	= bedGraph
+	format <a href="http://genome.ucsc.edu/cgi-bin/hgTracks?position=chr1
+			1000 2000">chr1 1000 2000</a>, etc.</li>
+
+      <p>The website displays scatterplots of signal versus chromStart. For
+	each chromosome, we segment the signal, ordered using chromStart. </p>
+
+      <p>Please create these required header fields:</p>
+      <ul>
+	<li><tt>type=bedGraph</tt> must be specified, according to the UCSC
+	  file format definition.</li>
+	<li><tt>db=hg19</tt> specifies the genome version of the
+	  coordinates. This will appear in the bed and bedGraph data
+	  exports.</li>
+	<li><tt>name=someUniqueID123</tt> specifies up to 30
+	  alphanumeric characters that will be used as a unique ID for
+	  the profile. Check the <a href="/all_profiles/">profile
+	  table</a> to make sure there are no other profiles with the
+	  same <tt>name</tt>.
+	</li>
+	<li><tt>export</tt> specifies if the data can be exported for
+	visualization on the UCSC genome browser:
+	  <ul>
+	    <li><tt>yes</tt> UCSC can download the probes,
+	    annotations, breakpoints, and segmentation via a public
+	    URL.</li>
+	    <li><tt>no</tt> the data will not be available for
+	      download via a public URL. If you want to visualize your
+	      data on a genome browser, then you will have to download
+	      the data exports yourself, and upload them manually to a
+	      genome browser.</li>
+	  </ul>
+	</li>
+	<li><tt>description="up to 59 characters that describe this
+	    profile"</tt> will be used in the bed and bedGraph data
+	    exports. If you upload this profile to the UCSC genome
+	    browser, the description appears as the title of the
+	    track.
+	</li>
+	<li><tt>share</tt> specifies who can see the profile:
+	  <ul>
+	    <li><tt>public</tt> all website users.</li>
+	    <li><tt>private</tt> only to the user that uploads it.</li>
+	    <li>A domain name such as <tt>curie.fr</tt>
+	    or <tt>stat.berkeley.edu</tt>, which means that only users
+	    with emails ending with the specified domain will be
+	    allowed.</li>
+	  </ul>
+	</li>
+	<li>
+	  <tt>maxSegments</tt> should be an integer that specifies the
+	  maximum number of segments for pre-calculated models. Larger
+	  values slow down the profile preprocessing, but increase the
+	  number of breakpoints available in saved models.
+	</li>
+      </ul>
+
+      <p>If you have many files to upload, you may want to
+	use <a href="/static/upload_profiles.py">upload_profiles.py</a>.</p>
+
+      <form enctype="multipart/form-data" method="post" 
+	    action="upload">
+	<p><label for="id_file">File:</label>
+	  <input type="file" name="file" id="id_file" />
+	  <input type="hidden" name="user" value="${user}" id="id_user" />
+	</p>
+	 <input type="submit" 
+		value="Upload profile
+Click once and please wait
+Larger profiles can take several minutes to transfer" />
+      </form>
+
+      <p>Return to <a href="/">home</a>.</p>
+
+  </div>
+
+</metal:main>

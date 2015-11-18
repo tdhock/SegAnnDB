@@ -1,0 +1,30 @@
+<metal:main use-macro="load: base.pt">
+
+  <title metal:fill-slot="title">
+    SegAnnDB: profile upload status
+  </title>
+
+  <div metal:fill-slot="content">
+
+    <div tal:condition="error">
+      <p>An error occured, please try again.</p>
+      <pre>
+${error}</pre>
+    </div>
+
+    <p tal:condition="not error">
+      Profile ${name} has passed checks and was uploaded
+      successfully. Now it will be pre-processed with several
+      segmentation models, and it will be available for interactive
+      analysis in a few minutes.</p>
+
+    <p><a href="/upload">Upload another profile</a>.
+    </p>
+
+    <p><a href="/">Home</a>.
+    </p>
+
+  </div>
+
+</metal:main>
+

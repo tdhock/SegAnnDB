@@ -1,0 +1,23 @@
+<metal:main use-macro="load: base.pt">
+
+  <title metal:fill-slot="title">
+    SegAnnDB: profiles for ${str(user)}
+  </title>
+
+  <div metal:fill-slot="content">    
+
+    <h2>All ${profile_count} profiles for user ${str(user)}
+    [<a href="/csv_profiles/">csv</a>]</h2>
+
+    <form action="http://genome.ucsc.edu/cgi-bin/hgCustom" 
+	  method="post" enctype="multipart/form-data">
+      <input type="hidden" name="hgct_customText" value="${copy_urls}" />
+      <input type="submit" value="Send all segmentation models to UCSC" />
+    </form>
+
+    <metal:main use-macro="load: profile_table.pt">
+
+  </div>
+
+</metal:main>
+

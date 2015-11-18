@@ -1,0 +1,47 @@
+
+td {
+    padding: 0px;
+    text-align: center;
+}
+
+td.chromRow {
+    border: 1px solid grey;
+    border-collapse: collapse;
+}
+
+svg {
+  font: 10px sans-serif;
+}
+rect.extent {
+  fill: #000;
+  fill-opacity: .125;
+  stroke: #fff;
+}
+
+rect.frame {
+  fill: #fff;
+  fill-opacity: .7;
+  stroke: #aaa;
+}
+
+circle {
+  fill: #ccc;
+  /*fill-opacity: .5;*/
+  stroke-width: 2px;
+}
+
+
+line.breakpoint {
+    stroke-width: 2;
+    stroke-dasharray: 4,4;
+}
+
+line.segmentation {
+    stroke-width: 3;
+    stroke-linecap: square;
+}
+
+line.guide {
+    stroke: grey;
+    opacity: 0.5;
+}
