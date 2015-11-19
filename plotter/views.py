@@ -179,8 +179,8 @@ def read_probes(lines, chrom_lengths):
     # only store data for chrom for which we have the length, if there
     # are at least 2 probes.
     chrom_meta = {}
-    for ch in chroms:
-        probeList = chroms[ch]
+    for ch in chroms.keys():
+        probeList = chroms.pop(ch)
         if len(probeList) > 1 and ch in chrom_lengths:
             probeList.sort(key=lambda tup: tup[0]) #position, logratio
             chromStart = numpy.array([

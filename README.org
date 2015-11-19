@@ -1,3 +1,4 @@
 SegAnnDB: supervised interactive DNA copy number analysis
 
 For installation instructions see [[file:INSTALL.sh][INSTALL.sh]].
+
