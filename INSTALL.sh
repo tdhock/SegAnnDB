@@ -3,10 +3,10 @@
 http://google-chrome.en.uptodown.com/ubuntu/download/65857
 
 # Download python-dev and required packages.
-sudo apt-get install python-dev python-setuptools python-numpy python-bsddb3 subversion build-essential python-imaging db-util
+sudo apt-get install python-dev python-setuptools python-numpy python-bsddb3 subversion build-essential python-imaging db-util git
 
 # These are not strictly essential, but are useful:
-sudo apt-get emacs htop 
+sudo apt-get install emacs htop 
 
 # Download/install pyramid + persona
 sudo easy_install "pyramid==1.4.5" 
@@ -15,6 +15,7 @@ sudo easy_install pyramid-persona
 # Download and install SegAnnot and PrunedDP extension modules.
 cd
 svn checkout svn://r-forge.r-project.org/svnroot/segannot/python segannot
+cd segannot
 python setup.py build
 sudo python setup.py install
 
@@ -22,8 +23,8 @@ sudo python setup.py install
 cd
 git clone https://github.com/tdhock/SegAnnDB.git
 cd SegAnnDB
-sed -i 's/^FILE_PREFIX =/#FILE_PREFIX =/' plotter/db.py
-sed -i 's/#FILE_PREFIX = "."/FILE_PREFIX = "."/' plotter/db.py
+sed -i 's#^FILE_PREFIX.*$#FILE_PREFIX = "/var/www"#' plotter/db.py
+#sed -i 's/#FILE_PREFIX = "."/FILE_PREFIX = "."/' plotter/db.py
 sudo python setup.py install
 
 # for an apache web server
