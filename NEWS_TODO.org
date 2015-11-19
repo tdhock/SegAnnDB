@@ -41,6 +41,10 @@ the annotated regions in a database and display an updated
 segmentation model?
 https://wiki.galaxyproject.org/VisualizationsRegistry
 
+2015.11.19
+
+First installation from GitHub.
+
 4 March 2014
 
 Viewing/annotating several profiles at a time.

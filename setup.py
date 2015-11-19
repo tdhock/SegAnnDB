@@ -13,7 +13,7 @@ requires = [
     ]
 
 setup(name='plotter',
-      version='0.0',
+      version='2015.11.19',
       description='plotter',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
