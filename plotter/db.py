@@ -977,6 +977,13 @@ class ProfileQueue(Resource):
     RE_LEN = 50
     @classmethod
     def process_one(cls):
+        stat_dict = cls.db.stat()
+        if stat_dict["nkeys"] == 0: #empty queue
+            profiles = Profile.all()
+            #profiles whose names are for some reason missing from the queue
+            not_ready = [p for p in profiles if not p["ready"]]
+            for p in not_ready:
+                cls.db.append(p["name"])
         recid, name = cls.db.consume_wait()
         pro = Profile(name.strip()) #need to remove queue padding.
         pro.process()
