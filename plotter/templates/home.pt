@@ -6,7 +6,7 @@
 
   <div metal:fill-slot="content">
 
-    <h2>Interactive genomic data segmentation on the web</h2>
+    <h2>Interactive genomic data segmentation on the web.</h2>
 
     <div tal:condition="plot">
       <p>

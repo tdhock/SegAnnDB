@@ -53,8 +53,8 @@ LINE_PATTERNS = [
 COLUMN_SEP = r'\s+'
 LINE_PATTERN = "^%s$"%COLUMN_SEP.join(LINE_PATTERNS)
 LINE_REGEX = re.compile(LINE_PATTERN)
-FILE_PREFIX = "/var/www"
-#FILE_PREFIX = "."
+#FILE_PREFIX = "/var/www"
+FILE_PREFIX = "."
 SECRET_DIR = os.path.join(FILE_PREFIX,"secret")
 DB_HOME = os.path.join(FILE_PREFIX,"db")
 CHROMLENGTH_DIR = os.path.join(FILE_PREFIX,"chromlength")
@@ -75,7 +75,7 @@ def scatterplot_file(name, ch, suffix, lr_min, lr_max, width, lengths=None):
         pinfo = Profile(name).get()
         lengths = ChromLengths(pinfo["db"])
     #print fn, md, len(info["logratio"])
-    scatterplot.draw(info, secret_file(fn), 
+    scatterplot.draw(info, secret_file(fn),
                      int(width), HEIGHT_PX,
                      float(lr_min), float(lr_max),
                      1, lengths[ch])
@@ -96,7 +96,7 @@ def from_string(a):
 
 env = bsddb3.db.DBEnv()
 env.open(
-    DB_HOME, 
+    DB_HOME,
     bsddb3.db.DB_INIT_MPOOL|
     #bsddb3.db.DB_INIT_CDB|
     bsddb3.db.DB_INIT_LOCK|
@@ -121,7 +121,7 @@ class DB(type):
         cls.db = bsddb3.db.DB(env)
         if cls.RE_LEN:
             cls.db.set_re_len(cls.RE_LEN)
-        cls.db.open(cls.filename, None, cls.DBTYPE, 
+        cls.db.open(cls.filename, None, cls.DBTYPE,
                     bsddb3.db.DB_AUTO_COMMIT|
                     #bsddb3.db.DB_THREAD|
                     bsddb3.db.DB_CREATE)
@@ -253,7 +253,7 @@ class ChromLengths(Resource):
         f = gzip.open(local)
         r = csv.reader(f, delimiter="\t")
         chroms = dict([
-                (ch.replace("chr",""),int(last)) 
+                (ch.replace("chr",""),int(last))
                 for ch,last,ignore in r
                 ])
         return dict([
@@ -277,12 +277,12 @@ def get_model(probes, break_after):
     # convert types to standard python types, otherwise we get json
     # error.
     segments = [
-        {"logratio":float(m),"min":int(f),"max":int(l)} 
+        {"logratio":float(m),"min":int(f),"max":int(l)}
         for m,f,l in zip(mean,first_base,last_base)
         ]
     json = {
         "breakpoints":tuple([
-                {"min":int(m),"position":int(p),"max":int(M)} 
+                {"min":int(m),"position":int(p),"max":int(M)}
                 for m,p,M in zip(break_min,break_mid,break_max)
                 ]),
         "segments":tuple(segments),
@@ -345,7 +345,7 @@ def optimal_segments(real_number, intervals):
     for segments, m, M in intervals:
         if m<real_number and real_number <= M:
             return segments
-    
+
 # annotation color definitions.
 def hex_to_rgb(value):
     value = value.lstrip('#')
@@ -404,9 +404,9 @@ COPIES_INTEGER = {
 def infer_gain_loss(chroms):
     """Assign labels to unlabeled segments.
 
-    Input: a dict[chr]={"segments":[],"breaks":[]}. 
+    Input: a dict[chr]={"segments":[],"breaks":[]}.
     We edit these in-place so nothing needs to be returned.
-    
+
     """
     labeled = [] #annotations used for training the thresholds.
     to_annotate = [] #annotations which will be assigned gain/normal/loss.
@@ -494,7 +494,7 @@ class Profile(Resource):
     keys = ("name", )
     RELATED = (
         "Regions", "Profile", "Models",
-        "AnnotationCounts", "DisplayedModel", "DisplayedProfile", 
+        "AnnotationCounts", "DisplayedModel", "DisplayedProfile",
         "ChromProbes", "ModelError",
         )
     def delete(self):
@@ -510,7 +510,7 @@ class Profile(Resource):
         for db_key in UserProfiles.db_keys():
             up = UserProfiles(db_key)
             up.remove(pro_name)
-        # To delete: 
+        # To delete:
         for cls_name in self.RELATED:
             cls = eval(cls_name)
             keys = cls.db_keys()
@@ -564,7 +564,7 @@ class Profile(Resource):
         return dicts
     def process(self):
         """L2-optimal segmentations and model selection functions.
-        
+
         As soon as profiles are uploaded to the server, it responds
         and tells the user that processing has begun. In fact, each
         new profile enters the ProfileQueue, and a daemon process will
@@ -591,7 +591,7 @@ class Profile(Resource):
             kmax = min(len(probes["logratio"]), pinfo["maxSegments"])
             segmat = PrunedDP(probes["logratio"], kmax)
             models = [
-                get_model(probes,segmat[k,:k]) 
+                get_model(probes,segmat[k,:k])
                 for k in range(kmax)
                 ]
             sq_err = [m["squared_error"] for m in models]
@@ -618,16 +618,16 @@ class Profile(Resource):
                 zoom20_px = CHROME_UBUNTU_MAX
             small_px = int(float(bases[ch])/total_bases * DEFAULT_WIDTH)
             plot_info = (
-                ("profiles",-1,1,small_px), 
-                ("profile",pinfo["logratio_min"], pinfo["logratio_max"], 
+                ("profiles",-1,1,small_px),
+                ("profile",pinfo["logratio_min"], pinfo["logratio_max"],
                            small_px),
                 ("standard",meta["logratio_min"], meta["logratio_max"],
                          DEFAULT_WIDTH),
                 ("ipad",meta["logratio_min"],meta["logratio_max"],IPAD_MAX),
-                ("chrome_windows", 
+                ("chrome_windows",
                  meta["logratio_min"],meta["logratio_max"],
                  CHROME_WINDOWS_MAX),
-                ("chrome_ubuntu", 
+                ("chrome_ubuntu",
                  meta["logratio_min"],meta["logratio_max"],
                  CHROME_UBUNTU_MAX),
                 #("1pixel_per_probe",meta["logratio_min"],meta["logratio_max"],
@@ -635,7 +635,7 @@ class Profile(Resource):
                 # ("5pixels_per_probe",
                 #  meta["logratio_min"], meta["logratio_max"],
                 #  zoom5_px),
-                # ("20pixels_per_probe",meta["logratio_min"], 
+                # ("20pixels_per_probe",meta["logratio_min"],
                 #  meta["logratio_max"],zoom20_px),
                 )
             meta["plots"] = {}
@@ -647,7 +647,7 @@ class Profile(Resource):
                     "width_px":width,
                     "width_bases":bases[ch],
                     "file":scatterplot_file(pinfo["name"], ch, name,
-                                            lr_min, lr_max, 
+                                            lr_min, lr_max,
                                             width, bases),
                     }
         #print "%s ready"%pinfo["name"]
@@ -799,7 +799,7 @@ class TrainingSet(Resource):
     def make_details(self):
         return {}
 
-def chrom_model(models, error, regions, profile, ch, user, 
+def chrom_model(models, error, regions, profile, ch, user,
                 chrom_meta=None, user_model=None):
     """Calculate a model that is consistent with regions.
 
@@ -831,7 +831,7 @@ def chrom_model(models, error, regions, profile, ch, user,
             if b["annotation"]=="1breakpoint"
             ]
         break_anns.sort(key=lambda b: b["min"])
-        min_array = numpy.array([b["min"] for b in break_anns], 
+        min_array = numpy.array([b["min"] for b in break_anns],
                                 numpy.int32)
         max_array = numpy.array([b["max"] for b in break_anns],
                                 numpy.int32)
@@ -846,8 +846,8 @@ def chrom_model(models, error, regions, profile, ch, user,
                     in zip(result["start"],result["end"],result["mean"])
                     ]),
             "breakpoints":tuple([
-                    {"min":int(m),"position":int(p),"max":int(M)} 
-                    for m,p,M in 
+                    {"min":int(m),"position":int(p),"max":int(M)}
+                    for m,p,M in
            zip(result["break_min"],result["break_mid"],result["break_max"])
                     ]),
             "segannot":True,
@@ -944,7 +944,7 @@ class DisplayedProfile(Resource):
             error = ModelError(self.info["user"], self.info["name"], ch).get()
             brks = Breakpoints(self.info["user"], self.info["name"], ch).get()
             models = Models(self.info["name"], ch).get()
-            model = chrom_model(models, error, brks, 
+            model = chrom_model(models, error, brks,
                                 self.info["name"], ch, self.info["user"],
                                 meta, user_model)
             copies = Copies(self.info["user"], self.info["name"], ch).json()
@@ -971,7 +971,7 @@ def label_segment(ann, segment):
         segment["label"] = ann
     elif segment["label"] != ann:
         segment["label"] = "multilabeled"
-    
+
 class ProfileQueue(Resource):
     DBTYPE = bsddb3.db.DB_QUEUE
     RE_LEN = 50

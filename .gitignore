@@ -1,1 +1,11 @@
 *~
+*.pyc
+.idea
+.ropeproject
+chromlength/
+db/
+secret/
+build/
+dist/
+plotter.egg-info/
+
