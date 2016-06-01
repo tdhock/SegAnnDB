@@ -111,7 +111,7 @@ chr1 987423 987454 0.500802053057158
 	  <input type="file" name="file" id="id_file" />
 	  <input type="hidden" name="user" value="${user}" id="id_user" />
 	</p>
-	 <input type="submit" 
+	 <input id="submit_button" type="submit" 
 		value="Upload profile
 Click once and please wait
 Larger profiles can take several minutes to transfer" />

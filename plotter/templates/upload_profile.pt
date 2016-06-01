@@ -12,7 +12,7 @@
 ${error}</pre>
     </div>
 
-    <p tal:condition="not error">
+    <p id="success" tal:condition="not error">
       Profile ${name} has passed checks and was uploaded
       successfully. Now it will be pre-processed with several
       segmentation models, and it will be available for interactive
