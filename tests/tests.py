@@ -76,6 +76,30 @@ class SegAnnTest(unittest.TestCase):
         assert wait.until(
             EC.presence_of_element_located((By.ID, "success")))
 
+    def test_delete(self):
+        """
+        This test is for checking if we are able to delete the uploaded profile
+        """
+        print "Test#5 Profile Deleting test."
+        driver = self.driver
+        driver.get("http://localhost:8080/")
+        self.login(driver)
+
+        # make sure that we are logged in
+        wait = WebDriverWait(driver, 60)
+        assert wait.until(
+            EC.element_to_be_clickable((By.ID, "signout"))).is_displayed()
+
+        # this is a hack, we need to change it to something more generic.
+        # plausible for now
+        driver.get("http://localhost:8080/delete_profile/ES0004/")
+
+        ## how to assert ?
+        if ("deleted" in driver.page_source):
+            assert True
+        else:
+            assert False
+
     def login(self, driver):
         """
         This method is internal to testing framework
