@@ -1,4 +1,5 @@
 import unittest
+import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -8,10 +9,13 @@ from selenium.webdriver.common.keys import Keys
 
 class SegAnnTest(unittest.TestCase):
 
-    # Global Variables
+    # The testprofile can be downloaded at
+    # https://drive.google.com/open?id=0BxbS0oJuMJTHS1RGeGtvWmp3VzA
 
     def setUp(self):
         self.driver = webdriver.Firefox()
+        # enter the test_profile_path here
+        self.test_profile_path = "/home/ubuntu/Downloads/test_profile.bedGraph.gz"
 
     def test_isSegAnnUp(self):
         """
@@ -40,12 +44,37 @@ class SegAnnTest(unittest.TestCase):
         assert wait.until(
             EC.element_to_be_clickable((By.ID, "signout"))).is_displayed()
 
-    # def test_upload(self):
-        # """
-        # This test is for checking if we can successfully upload a profile
-        # """
-        # driver = self.driver
-        # driver.get("http://localhost:8080/upload")
+    def test_upload(self):
+        """
+        This test is for checking if we can successfully upload a profile
+        """
+        print "Test#3 Profile upload test"
+        # login into the app
+        driver = self.driver
+        driver.get("http://localhost:8080/")
+        self.login(driver)
+
+        # make sure that we are logged in
+        wait = WebDriverWait(driver, 60)
+        assert wait.until(
+            EC.element_to_be_clickable((By.ID, "signout"))).is_displayed()
+
+        # go to the upload page
+        driver.get("http://localhost:8080/upload")
+
+        # in the upload file field, upload the file
+        upload_field = driver.find_element_by_id("id_file")
+        test_profile_path = self.test_profile_path
+        upload_field.send_keys(test_profile_path)
+
+        # we need to use the submit() button
+        # because when we submit forms via click
+        # the whole thing has been found to freeze.
+        elem = driver.find_element_by_id("submit_button")
+        elem.submit()
+
+        assert wait.until(
+            EC.presence_of_element_located((By.ID, "success")))
 
     def login(self, driver):
         """
@@ -84,8 +113,9 @@ class SegAnnTest(unittest.TestCase):
         email_field.send_keys("helloworld@mockmyid.com")
 
         # xpath id obtained using firebug for the next button on persona dialog
-        driver.find_element_by_xpath(
-            "/html/body/div/section[1]/form/div[2]/div[1]/div/div[2]/p[4]/button[1]").click()
+        (driver.find_element_by_xpath(
+            "/html/body/div/section[1]/form/div[2]/div[1]/div/div[2]/p[4]/button[1]")
+            .click())
 
         # switch to the main window
         driver.switch_to.window(main_window_handle)
