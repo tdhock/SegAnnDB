@@ -14,6 +14,7 @@ install selenium using -
 
 Commands -
   `cd SegAnnDB`
+  
   `cd tests`
 
 edit line number 19 to correspond to the current path
