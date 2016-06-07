@@ -1,5 +1,6 @@
 import unittest
 import time
+import urllib2
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -17,7 +18,7 @@ class SegAnnTest(unittest.TestCase):
         # enter the test_profile_path here
         self.test_profile_path = "/home/ubuntu/Downloads/test_profile.bedGraph.gz"
 
-    def test_isSegAnnUp(self):
+    def test010_isSegAnnUp(self):
         """
         Test#1
         This test is for checking whether the page is loading or not
@@ -27,7 +28,7 @@ class SegAnnTest(unittest.TestCase):
         driver.get("http://localhost:8080")
         assert "SegAnnDB" in driver.title
 
-    def test_login(self):
+    def test020_login(self):
         """
         Test#2
         This test is for testing whether the login functionality is working
@@ -44,7 +45,7 @@ class SegAnnTest(unittest.TestCase):
         assert wait.until(
             EC.element_to_be_clickable((By.ID, "signout"))).is_displayed()
 
-    def test_upload(self):
+    def test030_upload(self):
         """
         This test is for checking if we can successfully upload a profile
         """
@@ -76,7 +77,51 @@ class SegAnnTest(unittest.TestCase):
         assert wait.until(
             EC.presence_of_element_located((By.ID, "success")))
 
-    def test_delete(self):
+    def test040_annotate(self):
+        """
+        This test does two things -
+        a. Annotate a region
+        b. Delete that annotation
+
+        This all happens on the test uploaded profile
+        """
+
+        print "Test #4 for testing annotation"
+
+        # we need to give some time for profile processing before we can make
+        # annotations
+        time.sleep(60)
+
+        driver = self.driver
+        driver.get("http://localhost:8080/")
+        self.login(driver)
+
+        # make sure that we are logged in
+        wait = WebDriverWait(driver, 60)
+        assert wait.until(
+            EC.element_to_be_clickable((By.ID, "signout"))).is_displayed()
+
+        #
+        url_for_annotation = (
+            "http://localhost:8080/add_region/ES0004/3/breakpoints/1breakpoint/46469264/67723671/")
+
+        delete_annotation = (
+            "http://localhost:8080/delete_region/ES0004/3/breakpoints/0/")
+
+        resp = urllib2.urlopen(url_for_annotation)
+
+        if resp.getcode() != 200:
+            assert False
+
+        resp.close()
+
+        del_resp = urllib2.urlopen(delete_annotation)
+        if del_resp.getcode() != 200:
+            assert False
+
+        del_resp.close()
+
+    def test050_delete(self):
         """
         This test is for checking if we are able to delete the uploaded profile
         """
@@ -94,7 +139,7 @@ class SegAnnTest(unittest.TestCase):
         # plausible for now
         driver.get("http://localhost:8080/delete_profile/ES0004/")
 
-        ## how to assert ?
+        # how to assert ?
         if ("deleted" in driver.page_source):
             assert True
         else:
