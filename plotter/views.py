@@ -12,12 +12,14 @@ import os
 from datetime import datetime
 import json
 
+
 def add_userid(fn):
     def view(request):
         d = fn(request)
         d["user"] = authenticated_userid(request)
         return d
     return view
+
 
 def not_anonymous(fn):
     """Raise Forbidden if user is not logged in."""
@@ -28,6 +30,7 @@ def not_anonymous(fn):
         return fn(request)
     return view
 
+
 def forbidden_userprofiles(request):
     userid = authenticated_userid(request)
     allowed = db.UserProfiles(userid).get()
@@ -36,10 +39,11 @@ def forbidden_userprofiles(request):
     if "name" in md:
         for name in md["name"].split(","):
             looking.append(name)
-    #print looking, allowed
+    # print looking, allowed
     for pname in looking:
         if pname not in allowed:
             raise Forbidden()
+
 
 def check_userprofiles(fn):
     """Raise Forbidden if user shouldn't access profile."""
@@ -47,6 +51,7 @@ def check_userprofiles(fn):
         forbidden_userprofiles(request)
         return fn(request)
     return view
+
 
 def check_export(fn):
     """Raise Forbidden if this profile can't be exported."""
@@ -59,7 +64,9 @@ def check_export(fn):
         return fn(request)
     return view
 
-ADMIN_USERS = ["tdhock5@gmail.com"]
+ADMIN_USERS = ["tdhock5@gmail.com", "x.abhishek.flyhigh@gmail.com"]
+
+
 def admin_only(fn):
     """Raise Forbidden if user is not on the admin list."""
     def view(request):
@@ -68,6 +75,7 @@ def admin_only(fn):
             raise Forbidden("not admin user")
         return fn(request)
     return view
+
 
 @view_config(route_name="delete_profile")
 def delete_profile(request):
@@ -84,21 +92,24 @@ def delete_profile(request):
     response.write(pro_msg)
     return response
 
+
 @view_config(route_name="secret")
 @check_export
 def secret(request):
-    fn = db.secret_file("%(name)s%(suffix)s"%request.matchdict)
+    fn = db.secret_file("%(name)s%(suffix)s" % request.matchdict)
     return FileResponse(fn, request=request)
+
 
 def table_profiles(names, userid):
     profiles = []
     for pname in names:
-        p = db.Profile(pname).get_export(userid) 
+        p = db.Profile(pname).get_export(userid)
         # add info for how many annotations for this user.
         counts = db.AnnotationCounts(userid, pname).get()
         p.update(counts)
         profiles.append(p)
     return profiles
+
 
 @view_config(route_name='home', renderer='templates/home.pt')
 def home(request):
@@ -107,24 +118,26 @@ def home(request):
     # show only a few of the most recently uploaded profiles.
     profiles = table_profiles(profile_names[:5], userid)
     info = {
-        'profile_count':len(profile_names),
-        'profiles':profiles,
-        'user':userid,
+        'profile_count': len(profile_names),
+        'profiles': profiles,
+        'user': userid,
         }
     pname = 'nb18'
     if pname in profile_names:
-        info['plot'] = plotJS([pname],['17'],'standard')
+        info['plot'] = plotJS([pname], ['17'], 'standard')
     else:
         info["plot"] = None
     return info
+
 
 @view_config(route_name="upload",
              request_method="GET",
              renderer="templates/upload.pt")
 @not_anonymous
 @add_userid
-def display_upload(request):   
+def display_upload(request):
     return {}
+
 
 def read_header(line):
     """Parse and check probe header.
@@ -135,18 +148,19 @@ def read_header(line):
     results = {}
     # check for several things in the header.
     line = line.replace("\n", " ")
-    for var,(pattern,regex) in db.HEADER_REGEXES.iteritems():
+    for var, (pattern, regex) in db.HEADER_REGEXES.iteritems():
         match = regex.search(line)
         if not match:
-            raise ValueError("header does not indicate '%s'"%pattern)
+            raise ValueError("header does not indicate '%s'" % pattern)
         results[var] = match.groups()[0]
     MAX = 30
     if len(results["name"]) > MAX:
-        raise ValueError("profile names must be %d characters or less"%MAX)
-    if results["share"] == "public" and results["export"]=="no":
+        raise ValueError("profile names must be %d characters or less" % MAX)
+    if results["share"] == "public" and results["export"] == "no":
         raise ValueError("share=public implies export=yes")
     results["maxSegments"] = int(results["maxSegments"])
     return results
+
 
 def check_max(pos, txt, ch, chrom_lengths):
     """Raise ValueError if pos > chrom_lengths[ch]."""
@@ -154,8 +168,9 @@ def check_max(pos, txt, ch, chrom_lengths):
         max_bases = chrom_lengths[ch]
         if int(pos) > max_bases:
             raise ValueError(
-                "%s=%s > max(chr%s)=%s"%(
+                "%s=%s > max(chr%s)=%s" % (
                     txt, pos, ch, max_bases))
+
 
 def read_probes(lines, chrom_lengths):
     """Parse and check probe lines.
@@ -168,8 +183,8 @@ def read_probes(lines, chrom_lengths):
     for line in lines:
         match = db.LINE_REGEX.match(line.strip())
         if not match:
-            raise ValueError("line\n%sdoes not match '%s'"%(
-                    line,db.LINE_PATTERN))
+            raise ValueError("line\n%sdoes not match '%s'" % (
+                line, db.LINE_PATTERN))
         ch, chromStart, chromEnd, logratio = match.groups()
         check_max(chromStart, "chromStart", ch, chrom_lengths)
         check_max(chromEnd, "chromEnd", ch, chrom_lengths)
@@ -182,32 +197,34 @@ def read_probes(lines, chrom_lengths):
     for ch in chroms.keys():
         probeList = chroms.pop(ch)
         if len(probeList) > 1 and ch in chrom_lengths:
-            probeList.sort(key=lambda tup: tup[0]) #position, logratio
+            probeList.sort(key=lambda tup: tup[0])  # position, logratio
             chromStart = numpy.array([
-                    pos for pos, lr in probeList],numpy.int32)
+                pos for pos, lr in probeList], numpy.int32)
             chroms[ch] = {
-                "logratio":numpy.array([
-                        lr for pos, lr in probeList],numpy.float),
-                "chromStart":chromStart,
+                "logratio": numpy.array([
+                    lr for pos, lr in probeList], numpy.float),
+                "chromStart": chromStart,
                 }
             ch_lr = chroms[ch]["logratio"]
             chrom_meta[ch] = {
-                "logratio_min":min(ch_lr),
-                "logratio_max":max(ch_lr),
-                "probes":len(ch_lr),
+                "logratio_min": min(ch_lr),
+                "logratio_max": max(ch_lr),
+                "probes": len(ch_lr),
                 }
     return {
-        "logratio_min":min([d["logratio_min"] for d in chrom_meta.values()]),
-        "logratio_max":max([d["logratio_max"] for d in chrom_meta.values()]),
-        "probes":sum([d["probes"] for d in chrom_meta.values()]),
-        "chroms":chroms,
-        "chrom_meta":chrom_meta,
+        "logratio_min": min([d["logratio_min"] for d in chrom_meta.values()]),
+        "logratio_max": max([d["logratio_max"] for d in chrom_meta.values()]),
+        "probes": sum([d["probes"] for d in chrom_meta.values()]),
+        "chroms": chroms,
+        "chrom_meta": chrom_meta,
         }
 
 TARGET_BREAKS = {
-    "0breakpoints":0,
-    "1breakpoint":1,
+    "0breakpoints": 0,
+    "1breakpoint": 1,
     }
+
+
 @view_config(route_name="add_region",
              renderer="json")
 @check_userprofiles
@@ -221,15 +238,15 @@ def add_region(request):
     # is undefined and so we should reject the new annotation.
     db.AnnotationCounts(userid, md["name"]).put(None)
     reg = {
-        "min":int(md["min"]),
-        "max":int(md["max"]),
-        "annotation":md["annotation"],
+        "min": int(md["min"]),
+        "max": int(md["max"]),
+        "annotation": md["annotation"],
         }
     # first calculate error of this region.
     if md["trackType"] == "breakpoints":
         models = db.Models(md["name"], md["chr"]).get()
         breaks = numpy.array([
-            ((reg["min"] < m["breaks"]) & (m["breaks"] < reg["max"])).sum() 
+            ((reg["min"] < m["breaks"]) & (m["breaks"] < reg["max"])).sum()
             for m in models
             ])
         error = breaks != TARGET_BREAKS[reg["annotation"]]
@@ -238,14 +255,14 @@ def add_region(request):
     # then add to the total error.
     result = {}
     if md["trackType"] == "breakpoints":
-        evec = db.ModelError(userid,md["name"],md["chr"])
+        evec = db.ModelError(userid, md["name"], md["chr"])
         err_added, err_after = evec.add(reg["error"])
         chroms = update_model(models,
-                             err_after,
-                             after,
-                             md["name"],
-                             md["chr"],
-                             userid)
+                              err_after,
+                              after,
+                              md["name"],
+                              md["chr"],
+                              userid)
     else:
         res = db.DisplayedProfile(userid, md["name"])
         chroms = res.add(added, md["chr"])
@@ -253,12 +270,13 @@ def add_region(request):
     if "error" in added:
         added.pop("error")
     result["updates"] = [{
-            "profile_id":md["name"],
-            "chromosome":ch,
-            "update":model,
-            } for ch, model in chroms.iteritems()]
+        "profile_id": md["name"],
+        "chromosome": ch,
+        "update": model,
+        } for ch, model in chroms.iteritems()]
     result["region"] = added
     return result
+
 
 @view_config(route_name="delete_region",
              renderer="json")
@@ -272,29 +290,30 @@ def delete_region(request):
     removed, after = regions.remove(int(request.matchdict["id"]))
     result = {}
     if md["trackType"] == "breakpoints":
-        evec = db.ModelError(userid,md["name"],md["chr"])
+        evec = db.ModelError(userid, md["name"], md["chr"])
         err_removed, err_after = evec.remove(removed["error"])
         chroms = update_model(db.Models(md["name"], md["chr"]).get(),
-                             err_after,
-                             after,
-                             md["name"],
-                             md["chr"],
-                             userid)
+                              err_after,
+                              after,
+                              md["name"],
+                              md["chr"],
+                              userid)
     else:
-        res = db.DisplayedProfile(userid,md["name"])
+        res = db.DisplayedProfile(userid, md["name"])
         chroms = res.remove(removed, md["chr"])
     result["updates"] = [{
-            "profile_id":md["name"],
-            "chromosome":ch,
-            "update":model,
-            } for ch, model in chroms.iteritems()]
+        "profile_id": md["name"],
+        "chromosome": ch,
+        "update": model,
+        } for ch, model in chroms.iteritems()]
     return result
+
 
 def update_model(models, error, regions, profile, ch, user):
     """Used in add/remove breakpoint regions."""
     # store error for learning later.
     uerr = db.UserError(user)
-    uerr.add( (profile,ch,error) )
+    uerr.add((profile, ch, error))
     model = db.chrom_model(models, error, regions, profile, ch, user)
     res = db.DisplayedProfile(user, profile)
     chroms = res.get()
@@ -303,39 +322,44 @@ def update_model(models, error, regions, profile, ch, user):
     res.put(chroms)
     return chroms
 
+
 @view_config(route_name="profile",
              renderer="templates/plot_profile.pt")
 @add_userid
 @check_userprofiles
 def profile(request):
     return prof_info(
-        request.matchdict["name"], 
+        request.matchdict["name"],
         db.ChromLengths.CHROM_ORDER,
         "profile")
 
+
 def prof_info(name_str, chroms, size):
-    out = {"names":name_str}
+    out = {"names": name_str}
     if "," in name_str:
         namelist = name_str.split(",")
         out["p"] = None
     else:
         namelist = [name_str]
         out["p"] = db.Profile(name_str).get()
-    out["plot"] = plotJS(namelist,chroms,size)
+    out["plot"] = plotJS(namelist, chroms, size)
     return out
+
 
 @view_config(route_name="view_profiles")
 def view_profiles(request):
     profiles = request.POST.getall("profile")
     prof_str = ",".join(profiles)
-    return HTTPFound("/profile/%s/"%prof_str)
+    return HTTPFound("/profile/%s/" % prof_str)
 
-@view_config(route_name="about",renderer="templates/about.pt")
+
+@view_config(route_name="about", renderer="templates/about.pt")
 @add_userid
 def about(request):
     return {}
 
-CHROM_ZOOMS = ("standard","ipad","chrome_windows", "chrome_ubuntu")
+CHROM_ZOOMS = ("standard", "ipad", "chrome_windows", "chrome_ubuntu")
+
 
 @view_config(route_name="chrom",
              renderer="templates/plot_chrom.pt")
@@ -347,9 +371,10 @@ def chrom(request):
     out = prof_info(md["name"], md["chr"].split(','), w)
     out["name"] = md["name"]
     out["width"] = w
-    out["others"] = [z for z in CHROM_ZOOMS if z!=w]
+    out["others"] = [z for z in CHROM_ZOOMS if z != w]
     out["chr"] = md["chr"]
     return out
+
 
 @view_config(renderer="json",
              route_name="initial")
@@ -360,24 +385,26 @@ def initial(request):
     result_list = []
     for name in request.matchdict["profiles"].split(","):
         dp = db.DisplayedProfile(userid, name)
-        #dp.put(None)
+        # dp.put(None)
         prof = dp.get()
         for ch in request.matchdict["chromosomes"].split(","):
             if ch in prof:
-                m = prof[ch] # contains breaks, copy number calls.
-                m["breakpoints_regions"]=db.Breakpoints(userid, name, ch).json()
+                m = prof[ch]  # contains breaks, copy number calls.
+                m["breakpoints_regions"] = db.Breakpoints(
+                    userid, name, ch).json()
                 for b in m["breakpoints_regions"]:
                     # do not send numpy error.
                     b.pop("error")
-                m["copies_regions"]=db.Copies(userid, name, ch).json()
+                m["copies_regions"] = db.Copies(userid, name, ch).json()
                 result_list.append({
-                        "chromosome":ch,
-                        "profile_id":name,
-                        "update":m,
-                        })
+                    "chromosome": ch,
+                    "profile_id": name,
+                    "update": m,
+                    })
     return {
-        "updates":result_list,
+        "updates": result_list,
         }
+
 
 def plotJS(profiles, chroms, size):
     """JSON to pass to profilePlot JS code.
@@ -403,11 +430,13 @@ def plotJS(profiles, chroms, size):
         pinfo.append(cinfo)
     return json.dumps(pinfo)
 
+
 @view_config(route_name="csv_profiles")
 def csv_profiles(request):
     info = all_profiles(request)
-    resp = respond_bed_csv("profiles","csv",{},info["profiles"])
+    resp = respond_bed_csv("profiles", "csv", {}, info["profiles"])
     return resp
+
 
 @view_config(route_name="all_profiles",
              renderer="templates/all_profiles.pt")
@@ -415,14 +444,15 @@ def all_profiles(request):
     userid = authenticated_userid(request)
     profile_names = db.UserProfiles(userid).get()
     profiles = table_profiles(profile_names, userid)
-    urls = [db.COPIES_EXPORT_URL%p for p in profiles if p["copies"]>0]
+    urls = [db.COPIES_EXPORT_URL % p for p in profiles if p["copies"] > 0]
     info = {
-        'profile_count':len(profile_names),
-        "copy_urls":"\n".join(urls),
-        'profiles':profiles,
-        'user':userid,
+        'profile_count': len(profile_names),
+        "copy_urls": "\n".join(urls),
+        'profiles': profiles,
+        'user': userid,
         }
     return info
+
 
 def unannotated(userid):
     """Find an un-annotated chromosome."""
@@ -436,11 +466,14 @@ def unannotated(userid):
         for ch in chorder:
             if counts[ch] == 0:
                 return name, ch
+
+
 @view_config(route_name="random")
 def random(request):
     userid = authenticated_userid(request)
     name, ch = unannotated(userid)
-    return HTTPFound("/profile/%s/%s/"%(name,ch))
+    return HTTPFound("/profile/%s/%s/" % (name, ch))
+
 
 @view_config(route_name="upload",
              request_method="POST",
@@ -450,18 +483,19 @@ def upload_profile(request):
     try:
         upload = request.POST["file"].file
     except AttributeError:
-        return {"error":"no file selected"}
+        return {"error": "no file selected"}
     try:
         userid = request.POST["user"]
     except AttributeError:
-        return {"error":"no user specified"}
+        return {"error": "no user specified"}
     return upload_profile_user_file(userid, upload)
+
 
 def upload_profile_user_file(userid, upload):
     """Separate from upload_profile for testing."""
     db_users = db.UserProfiles.db_keys()
     if userid not in db_users:
-        return {"error":"unknown user "+userid}
+        return {"error": "unknown user "+userid}
     # need to specify mode r since upload is in wb mode, and GzipFile
     # inherits that mode by default.
     try:
@@ -476,13 +510,13 @@ def upload_profile_user_file(userid, upload):
         cl = db.ChromLengths(hg).get()
         # reject if we have no chrom info for this genome.
         if cl is None:
-            return {"error":"unsupported genome %s"%hg}
+            return {"error": "unsupported genome %s" % hg}
         # reject if another profile has the same name.
         if db.Profile.has_key(info["name"]):
-            return {"error":"profile named '%(name)s' already in db"%info}
+            return {"error": "profile named '%(name)s' already in db" % info}
         probeInfo = read_probes(f, cl)
     except ValueError, e:
-        return {"error":e}
+        return {"error": e}
     chroms = probeInfo.pop("chroms")
     for cname, probes in chroms.iteritems():
         # the regexp that we use for validating the logratio column is
@@ -491,7 +525,7 @@ def upload_profile_user_file(userid, upload):
         # logratios, and stop with an error if there are.
         nan_probes = numpy.isnan(probes["logratio"]).sum()
         if 0 < nan_probes:
-            return {"error":"%d nan probes on chr%s"%(nan_probes, cname)}
+            return {"error": "%d nan probes on chr%s" % (nan_probes, cname)}
         r = db.ChromProbes(info["name"], cname)
         r.put(probes)
     r = db.Profile(info["name"])
@@ -502,8 +536,8 @@ def upload_profile_user_file(userid, upload):
     r.put(info)
     # save gz profile to disk.
     f.seek(0)
-    out_name = db.secret_file("%(name)s.bedGraph.gz"%info)
-    saved = gzip.open(out_name,"w")
+    out_name = db.secret_file("%(name)s.bedGraph.gz" % info)
+    saved = gzip.open(out_name, "w")
     for data in f:
         saved.write(data)
     saved.close()
@@ -515,39 +549,39 @@ def upload_profile_user_file(userid, upload):
     # add profile to processing queue.
     db.ProfileQueue.db.append(info["name"])
     # need to return error none to avoid template nameError.
-    info["error"]=None
+    info["error"] = None
     return info
 
 HEADER_TEMPLATES = {
-    "bed":'track visibility=%(visibility)s name=%(name)s%(table)s description="%(description)s %(table)s" itemRgb=on',
-    "bedGraph":'track type=bedGraph visibility=%(visibility)s alwaysZero=on graphType=points yLineMark=0 yLineOnOff=on name=%(name)s%(table)s description="%(description)s %(table)s"',
+    "bed": 'track visibility=%(visibility)s name=%(name)s%(table)s description="%(description)s %(table)s" itemRgb=on',
+    "bedGraph": 'track type=bedGraph visibility=%(visibility)s alwaysZero=on graphType=points yLineMark=0 yLineOnOff=on name=%(name)s%(table)s description="%(description)s %(table)s"',
     }
 CSV_EXPORT_FORMATS = {
-    "regions":(
-            "user_id",
-            "profile_id",
-            "chromosome",
-            "min",
-            "max",
-            "type",
-            "annotation",
-            ),
-    "copies":(
-            "profile_id",
-            "chromosome",
-            "min",
-            "max",
-            "logratio",
-            "annotation",
-            ),
-    "breaks":(
+    "regions": (
+        "user_id",
+        "profile_id",
+        "chromosome",
+        "min",
+        "max",
+        "type",
+        "annotation",
+        ),
+    "copies": (
+        "profile_id",
+        "chromosome",
+        "min",
+        "max",
+        "logratio",
+        "annotation",
+        ),
+    "breaks": (
         "profile_id",
         "chromosome",
         "min",
         "position",
         "max",
         ),
-    "profiles":(
+    "profiles": (
         "name",
         "db",
         "copies",
@@ -561,7 +595,7 @@ CSV_EXPORT_FORMATS = {
         ),
     }
 MODEL_FORMATS = (
-    ("bed",("regions","copies","breaks"),' '.join([
+    ("bed", ("regions", "copies", "breaks"), ' '.join([
         "chr%(chromosome)s",
         "%(min)s",
         "%(max)s",
@@ -572,23 +606,23 @@ MODEL_FORMATS = (
         "%(max)s",
         "%(color_rgb_csv)s",
         ])),
-    ("bedGraph",("segments",),' '.join([
-            "chr%(chromosome)s",
-            "%(min)s",
-            "%(max)s",
-            "%(logratio)s",
-            ])),
+    ("bedGraph", ("segments",), ' '.join([
+        "chr%(chromosome)s",
+        "%(min)s",
+        "%(max)s",
+        "%(logratio)s",
+        ])),
     )
 EXPORT_FORMATS = {}
 for file_type, tables, fmt in MODEL_FORMATS:
     for table in tables:
-        EXPORT_FORMATS[(table,file_type)]=fmt
+        EXPORT_FORMATS[(table, file_type)] = fmt
 EXPORT_HEADERS = {}
-for data_type,file_type  in EXPORT_FORMATS:
-    EXPORT_HEADERS[(data_type,file_type)] = HEADER_TEMPLATES[file_type]
+for data_type, file_type in EXPORT_FORMATS:
+    EXPORT_HEADERS[(data_type, file_type)] = HEADER_TEMPLATES[file_type]
 
 for data_type, fields in CSV_EXPORT_FORMATS.iteritems():
-    tup = (data_type,"csv")
+    tup = (data_type, "csv")
     EXPORT_FORMATS[tup] = ','.join(["%("+f+")s" for f in fields])
     EXPORT_HEADERS[tup] = ','.join(fields)
 
@@ -600,16 +634,18 @@ for data_type, fields in CSV_EXPORT_FORMATS.iteritems():
 # see the scatterplot, and segments can be displayed dense using a
 # grayscale color code over the entire genomic space.
 EXPORT_VISIBILITY = {
-    "regions":"pack",
-    "segments":"dense",
-    "copies":"dense",
-    "breaks":"pack",
+    "regions": "pack",
+    "segments": "dense",
+    "copies": "dense",
+    "breaks": "pack",
     }
 
-ALTERED = ("loss","gain","deletion","amplification")
+ALTERED = ("loss", "gain", "deletion", "amplification")
 
-ZOOM_FACTORS = (3,10)
-@view_config(route_name="links",renderer="templates/profile_links.pt")
+ZOOM_FACTORS = (3, 10)
+
+
+@view_config(route_name="links", renderer="templates/profile_links.pt")
 @check_userprofiles
 def links(request):
     """Show a list of breakpoints and copy number alterations."""
@@ -624,7 +660,7 @@ def links(request):
         copies = pro.copies(userid)
         tables = (
             #("breaks",pro.breaks(userid)),
-            ("copies",[a for a in copies if a["annotation"] in ALTERED]),
+            ("copies", [a for a in copies if a["annotation"] in ALTERED]),
             )
         added = False
         for table, dicts in tables:
@@ -639,8 +675,8 @@ def links(request):
                 for f in ZOOM_FACTORS:
                     width = f * d["size"]/2
                     d["zoom"].append({
-                        "min":max(mid-width,1),
-                        "max":mid+width,
+                        "min": max(mid-width, 1),
+                        "max": mid+width,
                         })
                 alterations.append(d)
         # If any added for this profile, add it to the export form.
@@ -649,24 +685,25 @@ def links(request):
             if ex["export"] == "yes":
                 export_db = ex["db"]
                 export += ex["ucsc"]
-    alterations.sort(key=lambda d:(
-            d["name"],
-            db.ChromLengths.CHROM_RANK[d["chromosome"]],
-            d["min"]))
+    alterations.sort(key=lambda d: (
+        d["name"],
+        db.ChromLengths.CHROM_RANK[d["chromosome"]],
+        d["min"]))
     return {
-        "export":export,
-        "db":export_db,
-        "alterations":alterations,
-        "user":userid,
-        "zoom":ZOOM_FACTORS,
-        "names":names,
+        "export": export,
+        "db": export_db,
+        "alterations": alterations,
+        "user": userid,
+        "zoom": ZOOM_FACTORS,
+        "names": names,
         }
+
 
 @view_config(route_name="export")
 @check_export
 def export(request):
     """export annotations and models in plain text formats.
-    
+
     Access rights: for public profiles, everyone can read everyone
     else's annotations and models. That way we can have a button for
     export to UCSC.
@@ -675,13 +712,13 @@ def export(request):
     and models as well.
 
     """
-    #oldargs=,user_id,profile_id,table,file_format)
+    # oldargs=,user_id,profile_id,table,file_format)
 
-    #mdkeys user name what format
+    # mdkeys user name what format
     md = request.matchdict
     pro = db.Profile(md["name"])
     fun = getattr(pro, md["what"])
-    # need to 
+    # need to
     dicts = fun(md["user"])
     pinfo = pro.get()
     pinfo["table"] = md["what"]
@@ -691,6 +728,7 @@ def export(request):
         d["profile_id"] = md["name"]
     response = respond_bed_csv(md["what"], md["format"], pinfo, dicts)
     return response
+
 
 def respond_bed_csv(table, fmt, hinfo, dicts):
     response = Response(content_type="text/plain")

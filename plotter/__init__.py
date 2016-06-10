@@ -21,9 +21,9 @@ def main(global_config, **settings):
     config.add_route('initial', '/initial/{profiles}/{chromosomes}/')
     config.add_route('profile', '/profile/{name}/')
     config.add_route('chrom', '/profile/{name}/{chr}/')
-    config.add_route('delete_region', 
+    config.add_route('delete_region',
                      '/delete_region/{name}/{chr}/{trackType}/{id}/')
-    config.add_route('add_region', 
+    config.add_route('add_region',
               '/add_region/{name}/{chr}/{trackType}/{annotation}/{min}/{max}/')
     config.add_route("export","/export/{user}/{name}/{what}/{format}/")
     name_regex = db.HEADER_PATTERNS["name"]
@@ -34,5 +34,6 @@ def main(global_config, **settings):
     config.add_route("links","/links/{name}/")
     config.add_route("about","/about/")
     config.add_route("random","/random/")
+    config.add_route("new_endpoint", "/new_endpoint/")
     config.scan()
     return config.make_wsgi_app()
