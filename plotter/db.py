@@ -4,7 +4,6 @@ import re
 import os
 import csv
 import urllib2
-import pdb
 import numpy
 import math
 import atexit
@@ -16,30 +15,34 @@ from PrunedDP import PrunedDP
 from SegAnnot import SegAnnotBases
 from gradient_descent import mmir
 import scatterplot
+#import for image splitting
+import Image
 # scatterplot sizes in pixels.
-DEFAULT_WIDTH = 1500
+# DEFAULT_WIDTH = 1500
+DEFAULT_WIDTH = 1250
 HEIGHT_PX = 200
 CHROME_UBUNTU_MAX = 1000000
 CHROME_WINDOWS_MAX = 300000
-IPAD_MAX =            20000
+IPAD_MAX = 20000
 # stuff for checking uploaded files.
 HEADER_TUPS = [
-    ("share","[^ ]+"),
-    ("export","yes|no"),
-    ("name","[-a-zA-Z0-9]+"),
-    ("type","bedGraph"),
-    ("maxSegments","[0-9]+"),
-    ("db","hg1[789]"),
+    ("share", "[^ ]+"),
+    ("export", "yes|no"),
+    ("name", "[-a-zA-Z0-9]+"),
+    ("type", "bedGraph"),
+    ("maxSegments", "[0-9]+"),
+    ("db", "hg1[789]"),
     ]
 HEADER_PATTERNS = dict(HEADER_TUPS)
 NAME_REGEX = re.compile(HEADER_PATTERNS["name"])
 
-TO_COMPILE = [(var, "%s=(%s) "%(var,pattern)) for var, pattern in HEADER_TUPS]
+TO_COMPILE = [(var, "%s=(%s) " % (var, pattern))
+              for var, pattern in HEADER_TUPS]
 # do not include quotes in parsed description.
-TO_COMPILE.append( ("description",'"([^"]+)"') )
+TO_COMPILE.append(("description", '"([^"]+)"'))
 HEADER_REGEXES = {}
 for var, regex in TO_COMPILE:
-    HEADER_REGEXES[var] = (regex,re.compile(regex))
+    HEADER_REGEXES[var] = (regex, re.compile(regex))
 LINE_PATTERNS = [
     "chr(?P<chromosome>[0-9XY]+)",
     "(?P<chromStart>[0-9]+)",
@@ -51,38 +54,84 @@ LINE_PATTERNS = [
     ]
 
 COLUMN_SEP = r'\s+'
-LINE_PATTERN = "^%s$"%COLUMN_SEP.join(LINE_PATTERNS)
+LINE_PATTERN = "^%s$" % COLUMN_SEP.join(LINE_PATTERNS)
 LINE_REGEX = re.compile(LINE_PATTERN)
 #FILE_PREFIX = "/var/www"
 FILE_PREFIX = "."
-SECRET_DIR = os.path.join(FILE_PREFIX,"secret")
-DB_HOME = os.path.join(FILE_PREFIX,"db")
-CHROMLENGTH_DIR = os.path.join(FILE_PREFIX,"chromlength")
+SECRET_DIR = os.path.join(FILE_PREFIX, "secret")
+DB_HOME = os.path.join(FILE_PREFIX, "db")
+CHROMLENGTH_DIR = os.path.join(FILE_PREFIX, "chromlength")
 
-def secret_file(fn):
+
+def secret_file(fn, ch = None):
+    if ch is None:
+        ch = ""
     m = NAME_REGEX.match(fn)
     name = fn[:m.end()]
-    dirname = os.path.join(SECRET_DIR,name)
+    dirname = os.path.join(SECRET_DIR, name, ch)
+    # print dirname
     if not os.path.isdir(dirname):
         os.mkdir(dirname)
     return os.path.join(dirname, fn)
 
+
 def scatterplot_file(name, ch, suffix, lr_min, lr_max, width, lengths=None):
-    fn = "%s_chr%s_%s.png"%(name, ch, suffix)
-    #print "making %s"%fn
+    """
+    Parameters -
+    name - profile name
+    ch - chromosome number
+    suffix - zoom level etc
+    lr_min - log ratio min
+    lr_max - log ratio max
+    width - width in px
+    length - base pairs
+    """
+    fn = "%s_chr%s_%s.png" % (name, ch, suffix)
+    #print "making %s" % fn
     info = ChromProbes(name, ch).get()
     if lengths is None:
         pinfo = Profile(name).get()
         lengths = ChromLengths(pinfo["db"])
     #print fn, md, len(info["logratio"])
-    scatterplot.draw(info, secret_file(fn),
+    scatterplot.draw(info, secret_file(fn, ch),
                      int(width), HEIGHT_PX,
                      float(lr_min), float(lr_max),
                      1, lengths[ch])
     return fn
 
+
+def split_image(file_name, chr_num, profile_name, suffix, width):
+    """
+    Parameters-
+    file_name - the file name
+    chr_num - the chromosome number
+    profile_name - the profile id
+    suffix - the zoom level
+    width - the width_px of the image
+    """
+    file_location = SECRET_DIR + "/" + profile_name + "/" + chr_num + "/" + file_name
+    save_path = SECRET_DIR + "/" + profile_name + "/" + chr_num
+
+    # now open the file
+    im = Image.open(file_location)
+
+    i = DEFAULT_WIDTH
+    j = 1
+
+    while i <= width:
+        print i
+        box = (i - 1250, 0, i, 200)
+        img = im.crop(box)
+        fn = "%s_chr%s_%s_%d.png" % (profile_name, chr_num, suffix, j)
+        final_path = save_path + "/" + fn
+        img.save(final_path)
+        j += 1
+        i += 1250
+
+
 def to_string(a):
-    return pickle.dumps(a,2)
+    return pickle.dumps(a, 2)
+
 
 def from_string(a):
     return pickle.loads(a)
@@ -97,35 +146,40 @@ def from_string(a):
 env = bsddb3.db.DBEnv()
 env.open(
     DB_HOME,
-    bsddb3.db.DB_INIT_MPOOL|
-    #bsddb3.db.DB_INIT_CDB|
-    bsddb3.db.DB_INIT_LOCK|
-    bsddb3.db.DB_INIT_TXN|
-    bsddb3.db.DB_INIT_LOG|
+    bsddb3.db.DB_INIT_MPOOL |
+    # bsddb3.db.DB_INIT_CDB|
+    bsddb3.db.DB_INIT_LOCK |
+    bsddb3.db.DB_INIT_TXN |
+    bsddb3.db.DB_INIT_LOG |
     bsddb3.db.DB_CREATE)
-#print "nlockers=%(nlockers)s"%env.lock_stat()
+# print "nlockers=%(nlockers)s"%env.lock_stat()
 
 CLOSE_ON_EXIT = []
 
 # this prevents lockers/locks from accumulating when python is closed
 # normally, but does not prevent this when we C-c out of the server.
+
+
 def close_db():
     for db in CLOSE_ON_EXIT:
         db.close()
     env.close()
 atexit.register(close_db)
 
+
 class DB(type):
+
     def __init__(cls, name, bases, dct):
         cls.filename = name
         cls.db = bsddb3.db.DB(env)
         if cls.RE_LEN:
             cls.db.set_re_len(cls.RE_LEN)
         cls.db.open(cls.filename, None, cls.DBTYPE,
-                    bsddb3.db.DB_AUTO_COMMIT|
-                    #bsddb3.db.DB_THREAD|
+                    bsddb3.db.DB_AUTO_COMMIT |
+                    # bsddb3.db.DB_THREAD|
                     bsddb3.db.DB_CREATE)
         CLOSE_ON_EXIT.append(cls.db)
+
 
 class Resource(object):
     __metaclass__ = DB
@@ -141,13 +195,14 @@ class Resource(object):
         return cls.db.keys()
 
     @classmethod
-    def has_key(cls,k):
+    def has_key(cls, k):
         return k in cls.db
 
     def __init__(self, *args):
         self.values = args
         self.info = dict(zip(self.keys, self.values))
         self.db_key = " ".join([str(x) for x in self.values])
+
     def alter(self, fun):
         """Apply fun to current value and then save it.
 
@@ -155,45 +210,58 @@ class Resource(object):
         txn = env.txn_begin()
         before = self.get(txn)
         after = fun(before)
-        self.put(after,txn)
+        self.put(after, txn)
         txn.commit()
         return after
-    def get(self,txn=None):
+
+    def get(self, txn=None):
         if self.db_key not in self.db:
             return self.make(txn)
         val = self.db.get(self.db_key, txn=txn)
         return from_string(val)
-    def make(self,txn=None):
+
+    def make(self, txn=None):
         made = self.make_details()
-        self.put(made,txn)
+        self.put(made, txn)
         return made
-    def put(self,value,txn=None):
+
+    def put(self, value, txn=None):
         if value is None:
             if self.db_key in self.db:
                 self.db.delete(self.db_key, txn=txn)
         else:
             self.db.put(self.db_key, to_string(value), txn=txn)
+
     def __repr__(self):
-        return '%s("%s")'%(self.__class__.__name__, self.db_key)
+        return '%s("%s")' % (self.__class__.__name__, self.db_key)
+
     def make_details(self):
         return None
 
+
 class Container(Resource):
+
     """Methods to support updating lists or dicts."""
+
     def add(self, item):
         self.item = item
         after = self.alter(self.add_item)
         return self.item, after
+
     def remove(self, item):
         self.item = item
         after = self.alter(self.remove_item)
         return self.removed, after
 
+
 class ResList(Container):
+
     """Methods for updating stored lists."""
+
     def add_item(self, L):
         L.insert(0, self.item)
         return L
+
     def remove_item(self, L):
         if self.item in L:
             i = L.index(self.item)
@@ -202,64 +270,79 @@ class ResList(Container):
             self.removed = None
         return L
 
+
 class UserError(Container):
+
     """Each UserError is a dict with keys corresponding to chroms that
     have been annotated since the last learning."""
     keys = ("user", )
+
     def add_item(self, D):
         pro, ch, err = self.item
-        D[(pro,ch)] = err
+        D[(pro, ch)] = err
         return D
+
     def make_details(self):
         return {}
 
+
 class Regions(Container):
+
     """Dict of annotated regions."""
 
     keys = ("user", "name", "chrom")
+
     def add_item(self, D):
         self.item["id"] = D["next"]
         self.item["mid"] = (self.item["min"]+self.item["max"])/2
         D["data"][D["next"]] = self.item
         D["next"] += 1
         return D
+
     def remove_item(self, D):
         self.removed = D["data"].pop(self.item)
         return D
+
     def make_details(self):
-        return {"next":0,"data":{}}
+        return {"next": 0, "data": {}}
+
     def count(self):
         return len(self.get()["data"])
+
     def json(self):
         return self.get()["data"].values()
+
     def key_min(self):
-        return [(k,d["min"]) for k,d in self.get()["data"].iteritems()]
+        return [(k, d["min"]) for k, d in self.get()["data"].iteritems()]
+
 
 class ChromLengths(Resource):
     CHROM_ORDER = [str(x+1) for x in range(22)]+["X"]
-    CHROM_RANK = dict(zip(CHROM_ORDER,enumerate(CHROM_ORDER)))
+    CHROM_RANK = dict(zip(CHROM_ORDER, enumerate(CHROM_ORDER)))
     keys = ("db", )
     u = "http://hgdownload.soe.ucsc.edu/goldenPath/%s/database/chromInfo.txt.gz"
+
     def make_details(self):
         s = self.values[0]
-        local = os.path.join(CHROMLENGTH_DIR,s+".txt.gz")
+        local = os.path.join(CHROMLENGTH_DIR, s+".txt.gz")
         if not os.path.isfile(local):
-            #print "downloading %s" % local
+            # print "downloading %s" % local
             #u = self.u % s
             #urllib2.urlopen(u, local)
-            #print "chrom info for %s not available"%s
+            # print "chrom info for %s not available"%s
             return None
-        #print "reading %s" % local
+        # print "reading %s" % local
         f = gzip.open(local)
         r = csv.reader(f, delimiter="\t")
         chroms = dict([
-                (ch.replace("chr",""),int(last))
-                for ch,last,ignore in r
-                ])
+            (ch.replace("chr", ""), int(last))
+            for ch, last, ignore in r
+            ])
         return dict([
-                (ch,chroms[ch])
-                for ch in self.CHROM_ORDER
-                ])
+            (ch, chroms[ch])
+            for ch in self.CHROM_ORDER
+            ])
+
 
 def get_model(probes, break_after):
     """Calculate breaks and segments after PrunedDP."""
@@ -268,31 +351,32 @@ def get_model(probes, break_after):
     break_mid = (break_min+break_max)/2
     begin_slice = [0]+(break_after+1).tolist()
     end_slice = (break_after+1).tolist()+[len(probes["logratio"])]
-    yi = [probes["logratio"][b:e] for b,e in zip(begin_slice, end_slice)]
+    yi = [probes["logratio"][b:e] for b, e in zip(begin_slice, end_slice)]
     assert sum([len(y) for y in yi]) == len(probes["logratio"])
     mean = [y.mean() for y in yi]
-    residuals = [y-mu for y,mu in zip(yi,mean)]
-    first_base = [ probes["chromStart"][0] ]+break_mid.tolist()
-    last_base = break_mid.tolist()+[ probes["chromStart"][-1] ]
+    residuals = [y-mu for y, mu in zip(yi, mean)]
+    first_base = [probes["chromStart"][0]]+break_mid.tolist()
+    last_base = break_mid.tolist()+[probes["chromStart"][-1]]
     # convert types to standard python types, otherwise we get json
     # error.
     segments = [
-        {"logratio":float(m),"min":int(f),"max":int(l)}
-        for m,f,l in zip(mean,first_base,last_base)
+        {"logratio": float(m), "min": int(f), "max": int(l)}
+        for m, f, l in zip(mean, first_base, last_base)
         ]
     json = {
-        "breakpoints":tuple([
-                {"min":int(m),"position":int(p),"max":int(M)}
-                for m,p,M in zip(break_min,break_mid,break_max)
-                ]),
-        "segments":tuple(segments),
+        "breakpoints": tuple([
+            {"min": int(m), "position": int(p), "max": int(M)}
+            for m, p, M in zip(break_min, break_mid, break_max)
+            ]),
+        "segments": tuple(segments),
         }
     return {
         # for quickly checking model agreement to annotated regions.
-        "breaks":numpy.array(break_mid),
-        "json":json,
-        "squared_error":sum([(r*r).sum() for r in residuals]),
+        "breaks": numpy.array(break_mid),
+        "json": json,
+        "squared_error": sum([(r*r).sum() for r in residuals]),
         }
+
 
 def get_intervals(cost):
     """Calculate the model selection function given optimal costs.
@@ -326,12 +410,13 @@ def get_intervals(cost):
         intersection = cost_term / segments_term
         first = intersection.argmin()
         L_max = math.log(intersection[first])
-        tup = (optimal_segments,L_min,L_max)
+        tup = (optimal_segments, L_min, L_max)
         intervals.append(tup)
         i = candidate_segments[first]-1
         L_min = L_max
-    intervals.append( (1, L_min, float("inf")) )
+    intervals.append((1, L_min, float("inf")))
     return tuple(intervals)
+
 
 def optimal_segments(real_number, intervals):
     """Evaluate a model selection function.
@@ -343,36 +428,40 @@ def optimal_segments(real_number, intervals):
 
     """
     for segments, m, M in intervals:
-        if m<real_number and real_number <= M:
+        if m < real_number and real_number <= M:
             return segments
 
 # annotation color definitions.
+
+
 def hex_to_rgb(value):
     value = value.lstrip('#')
     lv = len(value)
     return tuple(int(value[i:i+lv/3], 16) for i in range(0, lv, lv/3))
-ANNOTATION_COLORS_HEX={##for export to ucsc
-    "deletion":"#3564ba",
-    "amplification":"#d02a2a",
-    "loss":"#93b9ff",
-    "normal":'#f6f4bf',
-    "gain":"#ff7d7d",
-    "1breakpoint":"#ff7d7d",
-    "0breakpoints":'#f6f4bf',
-    ">0breakpoints":"#a445ee",
-    "unlabeled":"#0adb0a",
-    "multilabeled":"#000000",
+ANNOTATION_COLORS_HEX = {  # for export to ucsc
+    "deletion": "#3564ba",
+    "amplification": "#d02a2a",
+    "loss": "#93b9ff",
+    "normal": '#f6f4bf',
+    "gain": "#ff7d7d",
+    "1breakpoint": "#ff7d7d",
+    "0breakpoints": '#f6f4bf',
+    ">0breakpoints": "#a445ee",
+    "unlabeled": "#0adb0a",
+    "multilabeled": "#000000",
     }
-ANNOTATION_COLORS_RGB={}
-ANNOTATION_COLORS_RGB_CSV={"notImplemented":"0,0,0"}
-for k,v in ANNOTATION_COLORS_HEX.iteritems():
+ANNOTATION_COLORS_RGB = {}
+ANNOTATION_COLORS_RGB_CSV = {"notImplemented": "0,0,0"}
+for k, v in ANNOTATION_COLORS_HEX.iteritems():
     ANNOTATION_COLORS_RGB[k] = tup = hex_to_rgb(v)
     ANNOTATION_COLORS_RGB_CSV[k] = ','.join([str(x) for x in tup])
+
 
 def add_color(d):
     if "annotation" in d:
         d["color_rgb_csv"] = ANNOTATION_COLORS_RGB_CSV[
             d["annotation"]]
+
 
 def get_thresh(below, above, dicts):
     """Calculate the best threshold for scores.
@@ -394,12 +483,13 @@ def get_thresh(below, above, dicts):
     return (dicts[i]["logratio"]+dicts[i+1]["logratio"])/2
 
 COPIES_INTEGER = {
-    "deletion":0,
-    "loss":1,
-    "normal":2,
-    "gain":3,
-    "amplification":4,
+    "deletion": 0,
+    "loss": 1,
+    "normal": 2,
+    "gain": 3,
+    "amplification": 4,
     }
+
 
 def infer_gain_loss(chroms):
     """Assign labels to unlabeled segments.
@@ -408,12 +498,12 @@ def infer_gain_loss(chroms):
     We edit these in-place so nothing needs to be returned.
 
     """
-    labeled = [] #annotations used for training the thresholds.
-    to_annotate = [] #annotations which will be assigned gain/normal/loss.
+    labeled = []  # annotations used for training the thresholds.
+    to_annotate = []  # annotations which will be assigned gain/normal/loss.
     unique = []
     for seg_info in chroms.values():
         for d in seg_info["segments"]:
-            if d["label"]=="unlabeled":
+            if d["label"] == "unlabeled":
                 to_annotate.append(d)
             else:
                 ann = d["label"]
@@ -465,18 +555,18 @@ def infer_gain_loss(chroms):
     deletion = lower_thresh(1)
 
     for d in to_annotate:
-        if amplification is not None and d["logratio"]>amplification:
+        if amplification is not None and d["logratio"] > amplification:
             d["annotation"] = "amplification"
-        elif deletion is not None and d["logratio"]<deletion:
+        elif deletion is not None and d["logratio"] < deletion:
             d["annotation"] = "deletion"
-        elif loss is not None and d["logratio"]<loss:
+        elif loss is not None and d["logratio"] < loss:
             d["annotation"] = "loss"
-        elif gain is not None and d["logratio"]>gain:
+        elif gain is not None and d["logratio"] > gain:
             d["annotation"] = "gain"
         else:
             d["annotation"] = "normal"
     return
-    for d in dicts: # TODO: do this for bed export.
+    for d in dicts:  # TODO: do this for bed export.
         add_color(d)
 
 COPIES_EXPORT_URL = """
@@ -490,6 +580,8 @@ http://bioviz.rocq.inria.fr/export/%(user)s/%(name)s/segments/bedGraph/
 http://bioviz.rocq.inria.fr/export/%(user)s/%(name)s/breaks/bed/
 http://bioviz.rocq.inria.fr/export/%(user)s/%(name)s/copies/bed/
 """
+
+
 class Profile(Resource):
     keys = ("name", )
     RELATED = (
@@ -497,6 +589,7 @@ class Profile(Resource):
         "AnnotationCounts", "DisplayedModel", "DisplayedProfile",
         "ChromProbes", "ModelError",
         )
+
     def delete(self):
         """Delete all info for this profile.
 
@@ -523,34 +616,40 @@ class Profile(Resource):
                     res.put(None)
         # TODO: make file deletion cross-platform.
         name = self.values[0]
-        cmd = "rm -rf %s/%s"%(SECRET_DIR, name)
+        cmd = "rm -rf %s/%s" % (SECRET_DIR, name)
         os.system(cmd)
         deleted.append("files")
         return "deleted " + ", ".join(deleted)
-    def get_export(self,user):
+
+    def get_export(self, user):
         p = self.get()
-        d = {"name":self.values[0],"user":user}
-        p["ucsc"] = PROFILE_EXPORT_URLS%d
-        p["user"]=user
+        d = {"name": self.values[0], "user": user}
+        p["ucsc"] = PROFILE_EXPORT_URLS % d
+        p["user"] = user
         return p
-    def regions(self,user):
+
+    def regions(self, user):
         dicts = []
         name = self.values[0]
         for ch in ChromLengths.CHROM_ORDER:
             for short, table in REGION_TABLES:
                 for d in table(user, name, ch).json():
                     d["type"] = short
-                    d["chromosome"]=ch
+                    d["chromosome"] = ch
                     add_color(d)
                     dicts.append(d)
         return dicts
-    def breaks(self,user):
-        return self.displayed("breakpoints",user,annotation="1breakpoint")
-    def segments(self,user):
-        return self.displayed("segments",user)
-    def copies(self,user,color=False):
-        return self.displayed("segments",user)
-    def displayed(self,what,user,color=True,**kwargs):
+
+    def breaks(self, user):
+        return self.displayed("breakpoints", user, annotation="1breakpoint")
+
+    def segments(self, user):
+        return self.displayed("segments", user)
+
+    def copies(self, user, color=False):
+        return self.displayed("segments", user)
+
+    def displayed(self, what, user, color=True, **kwargs):
         dicts = []
         name = self.values[0]
         chroms = DisplayedProfile(user, name).get()
@@ -562,6 +661,7 @@ class Profile(Resource):
                     add_color(d)
                 dicts.append(d)
         return dicts
+
     def process(self):
         """L2-optimal segmentations and model selection functions.
 
@@ -581,17 +681,22 @@ class Profile(Resource):
         """
         #before = time.time()
         pinfo = self.get()
+        # print "pinfo- ", pinfo
         if pinfo is None:
             # This profile was deleted before processing!
             return
         bases = ChromLengths(pinfo["db"]).get()
         total_bases = sum(bases.values())
+        # print "bases- ", bases
+        # print "total_bases- ", total_bases
+
         for ch in pinfo["chrom_meta"]:
             probes = ChromProbes(pinfo["name"], ch).get()
+            # print "ChromProbes: ", probes
             kmax = min(len(probes["logratio"]), pinfo["maxSegments"])
             segmat = PrunedDP(probes["logratio"], kmax)
             models = [
-                get_model(probes,segmat[k,:k])
+                get_model(probes, segmat[k, :k])
                 for k in range(kmax)
                 ]
             sq_err = [m["squared_error"] for m in models]
@@ -617,18 +722,19 @@ class Profile(Resource):
             if zoom20_px > CHROME_UBUNTU_MAX:
                 zoom20_px = CHROME_UBUNTU_MAX
             small_px = int(float(bases[ch])/total_bases * DEFAULT_WIDTH)
+            # print "meta- %s\n" %meta
             plot_info = (
-                ("profiles",-1,1,small_px),
-                ("profile",pinfo["logratio_min"], pinfo["logratio_max"],
-                           small_px),
-                ("standard",meta["logratio_min"], meta["logratio_max"],
-                         DEFAULT_WIDTH),
-                ("ipad",meta["logratio_min"],meta["logratio_max"],IPAD_MAX),
+                ("profiles", -1, 1, small_px),
+                ("profile", pinfo["logratio_min"], pinfo["logratio_max"],
+                 small_px),
+                ("standard", meta["logratio_min"], meta["logratio_max"],
+                 DEFAULT_WIDTH),
+                ("ipad", meta["logratio_min"], meta["logratio_max"], IPAD_MAX),
                 ("chrome_windows",
-                 meta["logratio_min"],meta["logratio_max"],
+                 meta["logratio_min"], meta["logratio_max"],
                  CHROME_WINDOWS_MAX),
                 ("chrome_ubuntu",
-                 meta["logratio_min"],meta["logratio_max"],
+                 meta["logratio_min"], meta["logratio_max"],
                  CHROME_UBUNTU_MAX),
                 #("1pixel_per_probe",meta["logratio_min"],meta["logratio_max"],
                 # zoom2_px),
@@ -641,39 +747,52 @@ class Profile(Resource):
             meta["plots"] = {}
             for name, lr_min, lr_max, width in plot_info:
                 meta["plots"][name] = {
-                    "logratio_min":lr_min,
-                    "logratio_max":lr_max,
-                    "height_px":HEIGHT_PX,
-                    "width_px":width,
-                    "width_bases":bases[ch],
-                    "file":scatterplot_file(pinfo["name"], ch, name,
-                                            lr_min, lr_max,
-                                            width, bases),
+                    "logratio_min": lr_min,
+                    "logratio_max": lr_max,
+                    "height_px": HEIGHT_PX,
+                    "width_px": width,
+                    "width_bases": bases[ch],
+                    "file": scatterplot_file(pinfo["name"], ch, name,
+                                             lr_min, lr_max,
+                                             width, bases),
                     }
-        #print "%s ready"%pinfo["name"]
-        pinfo["ready"]=True
+                print "file created: ", meta["plots"][name]["file"]
+                print "---------------"
+                if meta["plots"][name]["width_px"] > DEFAULT_WIDTH :
+                    split_image(meta["plots"][name]["file"], ch, pinfo["name"], name, width)
+            # print "meta- ",meta
+            # print "\n\n\n\n----------\n\n\n\n\n"
+        print "%s ready"%pinfo["name"]
+        pinfo["ready"] = True
+        print pinfo
         self.put(pinfo)
-        #print time.time()-before, "seconds elapsed"
+        # print time.time()-before, "seconds elapsed"
+
 
 class Models(Resource):
     keys = ("name", "chr")
 
+
 class Breakpoints(Regions):
     pass
+
 
 class Copies(Regions):
     pass
 
 REGION_TABLES = (
-    ("breakpoints",Breakpoints),
-    ("copies",Copies),
+    ("breakpoints", Breakpoints),
+    ("copies", Copies),
     )
 REGION_TABLES_DICT = dict([
-        (short,table)
-        for short, table in REGION_TABLES
-        ])
+    (short, table)
+    for short, table in REGION_TABLES
+    ])
+
+
 class AnnotationCounts(Resource):
     keys = ("user", "name")
+
     def make_details(self):
         table_count = {}
         for short, table in REGION_TABLES:
@@ -690,16 +809,20 @@ class AnnotationCounts(Resource):
                 counts[short] += table_count[short][ch]
         return counts
 
+
 class UserModel(Resource):
     keys = ("user",)
+
     def make_details(self):
         # defaults from the ICML 2013 paper.
-        return (-2.0,numpy.array([1.3, 0.93]))
-    def predict(self,features):
+        return (-2.0, numpy.array([1.3, 0.93]))
+
+    def predict(self, features):
         if not hasattr(self, "coef"):
-            self.coef = self.get() # cache
+            self.coef = self.get()  # cache
         intercept, weights = self.coef
         return intercept + (weights*features).sum()
+
     def learn(self):
         """Update the weights and intercept based on annotations.
 
@@ -711,18 +834,18 @@ class UserModel(Resource):
         uerr = UserError(user)
         #err_dict = uerr.get(txn)
         err_dict = uerr.get()
-        if len(err_dict)==0:
-            #txn.commit()
-            #print "%s: nothing to learn."%self.values
+        if len(err_dict) == 0:
+            # txn.commit()
+            # print "%s: nothing to learn."%self.values
             return
         # get features for new signals.
         uerr.put({})
-        #txn.commit()
+        # txn.commit()
         profiles = {}
         for k in err_dict.keys():
             pro, ch = k
-            ptups = profiles.setdefault(pro,[])
-            ptups.append( (ch, err_dict[k]) )
+            ptups = profiles.setdefault(pro, [])
+            ptups.append((ch, err_dict[k]))
         ts = TrainingSet(user)
         train = ts.get()
         # analyze the error curves to get a target interval.
@@ -733,10 +856,10 @@ class UserModel(Resource):
                 features = meta["features"]
                 tint = target_interval(err, meta["intervals"])
                 if tint == (float("-inf"), float("inf")):
-                    if (pro,ch) in train:
-                        train.pop( (pro,ch) )
+                    if (pro, ch) in train:
+                        train.pop((pro, ch))
                 else:
-                    train[(pro,ch)] = (features, tint)
+                    train[(pro, ch)] = (features, tint)
         ts.put(train)
         # Don't even try to learn unless there is at least 2 training
         # examples.
@@ -752,16 +875,17 @@ class UserModel(Resource):
         L = numpy.array(L)
         #X.tofile("X.csv",sep=" ")
         #L.tofile("L.csv",sep=" ")
-        #print L
+        # print L
         # gradient descent learning.
-        param_before = self.get() # warm restart.
+        param_before = self.get()  # warm restart.
         params = mmir(X, L, param_before)
         for p in params:
             if not numpy.isfinite(p).all():
                 return
-        #print param_before, "before"
-        #print params, "after"
+        # print param_before, "before"
+        # print params, "after"
         self.put(params)
+
 
 def target_interval(err, intervals):
     """Do a linear scan of the penalized model error function to
@@ -770,7 +894,7 @@ def target_interval(err, intervals):
     last_e, last_m, last_M = eint[len(eint)-1]
     # fake interval that will always break, so the code below is
     # clearer and less repetitive.
-    eint.append( (float("inf"), last_M, None) )
+    eint.append((float("inf"), last_M, None))
     best = None
     best_size = 0
     best_err = float("inf")
@@ -780,9 +904,9 @@ def target_interval(err, intervals):
     right_i = 1
     while right_i < len(eint):
         e, m, M = eint[right_i]
-        if e != left_e: # a break in the error curve.
+        if e != left_e:  # a break in the error curve.
             size = m-left_penalty
-            better_error = left_e<best_err
+            better_error = left_e < best_err
             better_size = (left_e == best_err) and (size > best_size)
             if better_error or better_size:
                 # this is the best interval so far.
@@ -794,10 +918,13 @@ def target_interval(err, intervals):
         right_i += 1
     return biggest
 
+
 class TrainingSet(Resource):
     keys = ("user", )
+
     def make_details(self):
         return {}
+
 
 def chrom_model(models, error, regions, profile, ch, user,
                 chrom_meta=None, user_model=None):
@@ -806,7 +933,7 @@ def chrom_model(models, error, regions, profile, ch, user,
     Used for add/remove breakpoint region and initial DisplayedProfile."""
     optimal_err = error.min()
     if optimal_err == 0:
-        is_min = (error==0).nonzero()[0]
+        is_min = (error == 0).nonzero()[0]
         if len(is_min) == 1:
             model_index = is_min[0]
         else:
@@ -828,7 +955,7 @@ def chrom_model(models, error, regions, profile, ch, user,
         probes = ChromProbes(profile, ch).get()
         break_anns = [
             b for b in regions["data"].values()
-            if b["annotation"]=="1breakpoint"
+            if b["annotation"] == "1breakpoint"
             ]
         break_anns.sort(key=lambda b: b["min"])
         min_array = numpy.array([b["min"] for b in break_anns],
@@ -840,17 +967,18 @@ def chrom_model(models, error, regions, profile, ch, user,
                                min_array,
                                max_array)
         model = {
-            "segments":tuple([
-                    {"min":int(start),"max":int(end),"logratio":float(mu)}
-                    for start, end, mu
-                    in zip(result["start"],result["end"],result["mean"])
-                    ]),
-            "breakpoints":tuple([
-                    {"min":int(m),"position":int(p),"max":int(M)}
-                    for m,p,M in
-           zip(result["break_min"],result["break_mid"],result["break_max"])
-                    ]),
-            "segannot":True,
+            "segments": tuple([
+                {"min": int(start), "max": int(end), "logratio": float(mu)}
+                for start, end, mu
+                in zip(result["start"], result["end"], result["mean"])
+                ]),
+            "breakpoints": tuple([
+                {"min": int(m), "position": int(p), "max": int(M)}
+                for m, p, M in
+                zip(result["break_min"],
+                    result["break_mid"], result["break_max"])
+                ]),
+            "segannot": True,
             }
     # label segments using copy number annotations.
     copies = Copies(user, profile, ch).json()
@@ -859,7 +987,7 @@ def chrom_model(models, error, regions, profile, ch, user,
     for segment in model["segments"]:
         segment["label"] = "unlabeled"
         segment["copies"] = {}
-        while copies and copies[0]["mid"]<segment["max"]:
+        while copies and copies[0]["mid"] < segment["max"]:
             copy = copies.pop(0)
             ann = copy["annotation"]
             segment["copies"][copy["id"]] = ann
@@ -868,16 +996,18 @@ def chrom_model(models, error, regions, profile, ch, user,
     model["segments"] = segments
     return model
 
+
 class DisplayedModel(Resource):
     keys = ("user", "name", "chr")
+
     def make_details(self):
-        chrom_meta = getattr(self,"chrom_meta",None)
+        chrom_meta = getattr(self, "chrom_meta", None)
         if chrom_meta is None:
             p = Profile(self.info["name"]).get()
             chrom_meta = p["chrom_meta"][self.info["chr"]]
         user_model = UserModel(self.info["user"])
         penalty_value = user_model.predict(chrom_meta["features"])
-        segments = optimal_segments(penalty_value,chrom_meta["intervals"])
+        segments = optimal_segments(penalty_value, chrom_meta["intervals"])
         models = Models(self.info["name"], self.info["chr"]).get()
         model = models[segments-1]["json"]
         # TODO: look up existing annotations and use them!
@@ -885,19 +1015,23 @@ class DisplayedModel(Resource):
             segment["annotation"] = "unlabeled"
             segment["copies"] = {}
         return model
-    def add(self,region):
+
+    def add(self, region):
         self.region = region
         return self.alter(self.add_region)
-    def remove(self,region):
+
+    def remove(self, region):
         self.region = region
         return self.alter(self.remove_region)
-    def add_region(self,model):
+
+    def add_region(self, model):
         segment = region_in_segment(self.region, model["segments"])
         ann = self.region["annotation"]
         segment["copies"][self.region["id"]] = ann
         label_segment(ann, segment)
         return model
-    def remove_region(self,model):
+
+    def remove_region(self, model):
         segment = region_in_segment(self.region, model["segments"])
         segment["annotation"] = "unlabeled"
         segment["copies"].pop(self.region["id"])
@@ -905,35 +1039,42 @@ class DisplayedModel(Resource):
             label_segment(ann, segment)
         return model
 
+
 class DisplayedProfile(Resource):
+
     """All the current segments and copy number predictions."""
     keys = ("user", "name")
+
     def add(self, region, ch):
         self.region = region
         self.ch = ch
         return self.alter(self.add_region)
+
     def remove(self, region, ch):
         self.region = region
         self.ch = ch
         return self.alter(self.remove_region)
+
     def add_region(self, chroms):
         model = chroms[self.ch]
         add_copy_region(self.region, model)
         infer_gain_loss(chroms)
         return chroms
+
     def remove_region(self, chroms):
         model = chroms[self.ch]
         segment = region_in_segment(self.region, model["segments"])
         segment["label"] = "unlabeled"
-        region_dict = segment.setdefault("regions",{})
+        region_dict = segment.setdefault("regions", {})
         if self.region["id"] in region_dict:
             region_dict.pop(self.region["id"])
             for ann in region_dict.values():
                 label_segment(ann, segment)
             infer_gain_loss(chroms)
-        else: # this should only be when the db is out of sync.
+        else:  # this should only be when the db is out of sync.
             chroms = self.make_details()
         return chroms
+
     def make_details(self):
         """Called on a previously unseen profile."""
         p = Profile(self.info["name"]).get()
@@ -954,17 +1095,20 @@ class DisplayedProfile(Resource):
         infer_gain_loss(chroms)
         return chroms
 
+
 def add_copy_region(region, model):
     segment = region_in_segment(region, model["segments"])
     ann = region["annotation"]
-    region_dict = segment.setdefault("regions",{})
+    region_dict = segment.setdefault("regions", {})
     region_dict[region["id"]] = ann
     label_segment(ann, segment)
+
 
 def region_in_segment(region, segments):
     for segment in segments:
         if region["mid"] < segment["max"]:
             return segment
+
 
 def label_segment(ann, segment):
     if segment["label"] == "unlabeled":
@@ -972,50 +1116,62 @@ def label_segment(ann, segment):
     elif segment["label"] != ann:
         segment["label"] = "multilabeled"
 
+
 class ProfileQueue(Resource):
     DBTYPE = bsddb3.db.DB_QUEUE
     RE_LEN = 50
+
     @classmethod
     def process_one(cls):
         stat_dict = cls.db.stat()
-        if stat_dict["nkeys"] == 0: #empty queue
+        if stat_dict["nkeys"] == 0:  # empty queue
             profiles = Profile.all()
-            #profiles whose names are for some reason missing from the queue
+            # profiles whose names are for some reason missing from the queue
             not_ready = [p for p in profiles if not p["ready"]]
             for p in not_ready:
                 cls.db.append(p["name"])
         recid, name = cls.db.consume_wait()
-        pro = Profile(name.strip()) #need to remove queue padding.
+        pro = Profile(name.strip())  # need to remove queue padding.
         pro.process()
+
 
 class ChromProbes(Resource):
     keys = ("name", "chrom")
 
+
 class UserProfiles(ResList):
+
     """List of available profiles for each user."""
     keys = ("user", )
+
     def make_details(self):
         profiles = Profile.all()
         return [p["name"] for p in profiles if self.compatible(p)]
-    def compatible(self,pinfo):
+
+    def compatible(self, pinfo):
         """Decide if a profile can be viewed by this user."""
         u = self.values[0]
         criteria = [
-            pinfo["uploader"]==u,
-            pinfo["share"]=="public",
+            pinfo["uploader"] == u,
+            pinfo["share"] == "public",
             u and u.endswith(pinfo["share"]),
             ]
         return any(criteria)
 
+
 class Vector(Container):
+
     def add_item(self, V):
         return V + self.item
+
     def remove_item(self, V):
         self.removed = self.item
         return V - self.item
 
+
 class ModelError(Vector):
     keys = ("user", "name", "chr")
+
     def make_details(self):
         models = Models(self.info["name"], self.info["chr"]).get()
         error = numpy.array([0 for m in models])

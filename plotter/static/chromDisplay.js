@@ -4,6 +4,7 @@
 //     </script>
 
 function profilePlot(rowList){ 
+  console.log(rowList);
   var plot = d3.select("#plot");
   var table = plot.append("table");
 
@@ -64,8 +65,11 @@ function profilePlot(rowList){
       .attr("height",function(d){return d.height_px})
     // load background scatterplot.
       .style("background-image",function(d){
-	var scatter_url = "/secret/"+d.file;
-	return "url('"+scatter_url+"')";
+        // scatterurl was modified in order to make it work with the new fiile
+        // keeping scheme
+       	var fileName = d.profile + "_chr" + d.chr + "_" + d.zoom + d.index_suffix + ".png";
+		var scatter_url = "/secret/"+d.profile+"/"+d.chr+"/"+fileName;
+		return "url('"+scatter_url+"')";
       })
     ;
     CHROM_DISPLAYS[profile_id] = {};
@@ -399,6 +403,7 @@ function chromDisplay(
     }
 
     this.updateRegions = function(regions){
+    	console.log(regions);
       var rects = svg.selectAll("rect."+trackType)
 	.data(regions)
 	.enter().insert("rect","line")

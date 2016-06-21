@@ -1,0 +1,53 @@
+<metal:main use-macro="load: base.pt">
+
+  <title metal:fill-slot="title">
+    SegAnnDB: profile ${name} chr${chr}
+  </title>
+
+  <div metal:fill-slot="content">
+
+    <div>
+      <img src="/secret/${name}/${chr}/${name}_chr${chr}_standard.png" 
+      id="profile_overview" width="1250" height="200" style="border: 1px solid black;"/>
+    </div>
+
+    <a href="?width=${width}&index=${index_prev}">Previous</a>
+    <div id="p">
+      <img src="/secret/${name}/${chr}/${name}_chr${chr}_${width}${index_suffix}.png" 
+      id="plotter" width="1250" height="200" style="border: 1px solid black;"/>
+    </div>
+    <a href="?width=${width}&index=${index_next}">Next</a>
+
+    <div id="plot">
+
+    </div>
+
+    <p>
+      This is chr${chr} of profile ${name}.  Plot size:
+	<a tal:repeat="z others" href="?width=${z}">
+	  ${z}</a>.
+      <a href="/links/${name}/">Show alterations on the UCSC genome
+      browser</a>.
+    </p>
+    <p>
+      Go to
+      <a href="/">home</a>
+      <a href="/profile/${name}/">profile ${name}</a>
+      <a href="/random/">an un-annotated chromosome</a>.
+    </p>
+
+    <script type="text/javascript">
+      var data = ${plot};
+      <!-- data[0][0]["width_px"] = 1250; -->
+      data[0][0]["zoom"] = "${width}";
+      data[0][0]["offset_px"] = (${index} - 1) * 1250;
+      data[0][0]["index"] = ${index}
+      data[0][0]["index_suffix"] = "${index_suffix}";
+      var profile = new profilePlot(data);
+    </script>
+
+  </div>
+
+
+</metal:main>
+

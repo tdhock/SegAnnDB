@@ -93,10 +93,22 @@ def delete_profile(request):
     return response
 
 
+# @view_config(route_name="secret")
+# @check_export
+# def secret(request):
+    # fn = db.secret_file("%(name)s%(suffix)s" % request.matchdict)
+    # return FileResponse(fn, request=request)
+
+
 @view_config(route_name="secret")
-@check_export
-def secret(request):
-    fn = db.secret_file("%(name)s%(suffix)s" % request.matchdict)
+def secret_new(request):
+    # fn = db.secret_file("%(name)s%(suffix)s" % request.matchdict)
+    # return FileResponse(fn, request=request)
+    profileName = request.matchdict["profile_name"]
+    chr_num = request.matchdict["chr_num"]
+    file_name = "%(name)s%(suffix)s" % request.matchdict
+    fn = db.secret_file(file_name, chr_num)
+    print fn
     return FileResponse(fn, request=request)
 
 
@@ -309,6 +321,37 @@ def delete_region(request):
     return result
 
 
+@view_config(route_name='chrom', renderer='templates/new.pt')
+@add_userid
+@check_userprofiles
+def hello(request):
+    w = request.GET.get("width", "standard")
+    i = request.GET.get("index", "1")
+    md = request.matchdict
+    out = prof_info(md["name"], md["chr"].split(','), w)
+    out["name"] = md["name"]
+    out["width"] = w
+    out["others"] = [z for z in CHROM_ZOOMS if z != w]
+    out["chr"] = md["chr"]
+
+    # in case of standard width we want to send the correct suffixes
+    if w == "standard":
+        out["index"] = 0
+        out["index_next"] = ""
+        out["index_prev"] = ""
+        out["index_suffix"] = ""
+    else:
+        out["index"] = i
+        out["index_suffix"] = "_" + i
+
+        if int(i) == 1:
+            out["index_next"] = str(int(i)+1)
+            out["index_prev"] = "1"
+        else:
+            out["index_next"] = str(int(i)+1)
+            out["index_prev"] = str(int(i)-1)
+    return out
+
 def update_model(models, error, regions, profile, ch, user):
     """Used in add/remove breakpoint regions."""
     # store error for learning later.
@@ -335,6 +378,15 @@ def profile(request):
 
 
 def prof_info(name_str, chroms, size):
+    """
+    Parameters -
+    name-str - name of profile
+    chroms - number of chromosomes
+    size - zoom level
+
+    Returns -
+    a dict containing the profile data
+    """
     out = {"names": name_str}
     if "," in name_str:
         namelist = name_str.split(",")
@@ -361,19 +413,19 @@ def about(request):
 CHROM_ZOOMS = ("standard", "ipad", "chrome_windows", "chrome_ubuntu")
 
 
-@view_config(route_name="chrom",
-             renderer="templates/plot_chrom.pt")
-@add_userid
-@check_userprofiles
-def chrom(request):
-    w = request.GET.get("width", "standard")
-    md = request.matchdict
-    out = prof_info(md["name"], md["chr"].split(','), w)
-    out["name"] = md["name"]
-    out["width"] = w
-    out["others"] = [z for z in CHROM_ZOOMS if z != w]
-    out["chr"] = md["chr"]
-    return out
+# @view_config(route_name="chrom",
+             # renderer="templates/plot_chrom.pt")
+# @add_userid
+# @check_userprofiles
+# def chrom(request):
+    # w = request.GET.get("width", "standard")
+    # md = request.matchdict
+    # out = prof_info(md["name"], md["chr"].split(','), w)
+    # out["name"] = md["name"]
+    # out["width"] = w
+    # out["others"] = [z for z in CHROM_ZOOMS if z != w]
+    # out["chr"] = md["chr"]
+    # return out
 
 
 @view_config(renderer="json",
