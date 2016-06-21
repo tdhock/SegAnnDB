@@ -1,5 +1,7 @@
 import unittest
 import time
+import urllib
+import os
 import urllib2
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -16,7 +18,7 @@ class SegAnnTest(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         # enter the test_profile_path here
-        self.test_profile_path = "/home/ubuntu/Downloads/test_profile.bedGraph.gz"
+        self.test_profile_path = "./test_profile.bedGraph.gz"
 
     def test010_isSegAnnUp(self):
         """
@@ -111,6 +113,7 @@ class SegAnnTest(unittest.TestCase):
         resp = urllib2.urlopen(url_for_annotation)
 
         if resp.getcode() != 200:
+            print "Fail"
             assert False
 
         resp.close()
@@ -193,4 +196,18 @@ class SegAnnTest(unittest.TestCase):
         self.driver.close()
 
 if __name__ == "__main__":
+    # now we check for existence of the test file
+    # if it does not exist then we create it
+    file_name = "test_profile.bedGraph.gz"
+    file_path = "./" + file_name
+    if os.path.isfile(file_path):
+        print "Test file found!"
+    else:
+        print "Test file does not exists. Downloading."
+        download_url = "https://raw.githubusercontent.com/abstatic/SegAnnDB-tests/master/test_profile.bedGraph.gz"
+        urllib.urlretrieve(download_url, file_path)
+        if os.path.isfile(file_path):
+            print "Successfully downloaded the test profile."
+        else:
+            print "Failed to download the test profile."
     unittest.main()
