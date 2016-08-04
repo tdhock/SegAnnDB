@@ -22,7 +22,7 @@ def main(global_config, **settings):
     config.add_route('upload', 'upload')
     config.add_route('initial', '/initial/{profiles}/{chromosomes}/')
     config.add_route('profile', '/profile/{name}/')
-    # config.add_route('chrom', '/profile/{name}/{chr}/')
+    config.add_route('old_chrom', '/profile_old/{name}/{chr}/')
     config.add_route('delete_region',
                      '/delete_region/{name}/{chr}/{trackType}/{id}/')
     config.add_route('add_region',

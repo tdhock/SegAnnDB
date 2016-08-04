@@ -8,4 +8,5 @@ secret/
 build/
 dist/
 plotter.egg-info/
+tags
 

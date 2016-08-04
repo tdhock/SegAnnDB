@@ -12,6 +12,8 @@ import os
 from datetime import datetime
 import json
 
+# I am trying to override the authenticated_userid function here
+
 
 def add_userid(fn):
     def view(request):
@@ -102,13 +104,17 @@ def delete_profile(request):
 
 @view_config(route_name="secret")
 def secret_new(request):
+    """
+    New secret view for the new chromosome viewer.
+
+    This is most probably used for uploading the new images ?
+    """
     # fn = db.secret_file("%(name)s%(suffix)s" % request.matchdict)
     # return FileResponse(fn, request=request)
     profileName = request.matchdict["profile_name"]
     chr_num = request.matchdict["chr_num"]
     file_name = "%(name)s%(suffix)s" % request.matchdict
     fn = db.secret_file(file_name, chr_num)
-    print fn
     return FileResponse(fn, request=request)
 
 
@@ -133,8 +139,10 @@ def home(request):
         'profile_count': len(profile_names),
         'profiles': profiles,
         'user': userid,
-        }
+    }
     pname = 'nb18'
+    print request.persona_js
+    print "------------------------------------"
     if pname in profile_names:
         info['plot'] = plotJS([pname], ['17'], 'standard')
     else:
@@ -325,8 +333,12 @@ def delete_region(request):
 @add_userid
 @check_userprofiles
 def hello(request):
+    """
+    TODO: Add more documentation about this method.
+    Related to the new chrom viewer
+    """
     w = request.GET.get("width", "standard")
-    i = request.GET.get("index", "1")
+    i = request.GET.get("index", "")
     md = request.matchdict
     out = prof_info(md["name"], md["chr"].split(','), w)
     out["name"] = md["name"]
@@ -335,6 +347,14 @@ def hello(request):
     out["chr"] = md["chr"]
 
     # in case of standard width we want to send the correct suffixes
+    #
+    # index = index of the image we are going to show. No index will output the
+    #         full image for that zoom level.
+    #
+    # index_next = the next index , right after the current index
+    # index_prev = the prev index, right before the curernt index
+    # index_suffix = used to generate the image file name in the js code
+
     if w == "standard":
         out["index"] = 0
         out["index_next"] = ""
@@ -344,13 +364,20 @@ def hello(request):
         out["index"] = i
         out["index_suffix"] = "_" + i
 
-        if int(i) == 1:
+        if i == "":
+            # means, we want to view the full zoom level
+            out["index_next"] = "1"
+            out["index_prev"] = ""
+            out["index_suffix"] = ""
+        elif int(i) == 1:
             out["index_next"] = str(int(i)+1)
             out["index_prev"] = "1"
         else:
             out["index_next"] = str(int(i)+1)
             out["index_prev"] = str(int(i)-1)
+
     return out
+
 
 def update_model(models, error, regions, profile, ch, user):
     """Used in add/remove breakpoint regions."""
@@ -412,20 +439,23 @@ def about(request):
 
 CHROM_ZOOMS = ("standard", "ipad", "chrome_windows", "chrome_ubuntu")
 
-
-# @view_config(route_name="chrom",
-             # renderer="templates/plot_chrom.pt")
-# @add_userid
-# @check_userprofiles
-# def chrom(request):
-    # w = request.GET.get("width", "standard")
-    # md = request.matchdict
-    # out = prof_info(md["name"], md["chr"].split(','), w)
-    # out["name"] = md["name"]
-    # out["width"] = w
-    # out["others"] = [z for z in CHROM_ZOOMS if z != w]
-    # out["chr"] = md["chr"]
-    # return out
+"""
+This is the older chrom method.
+TODO: Need to rework it so that old chrom viewer works as well
+"""
+@view_config(route_name="old_chrom",
+             renderer="templates/plot_chrom.pt")
+@add_userid
+@check_userprofiles
+def chrom(request):
+    w = request.GET.get("width", "standard")
+    md = request.matchdict
+    out = prof_info(md["name"], md["chr"].split(','), w)
+    out["name"] = md["name"]
+    out["width"] = w
+    out["others"] = [z for z in CHROM_ZOOMS if z != w]
+    out["chr"] = md["chr"]
+    return out
 
 
 @view_config(renderer="json",
