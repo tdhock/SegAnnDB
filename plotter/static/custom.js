@@ -62,13 +62,29 @@ function drawJumps(rowData)
       // append the links to overview
       overviewDiv.append(link);
 
+      // lets see if we are in chrome_ubuntu
+      var url = window.location.href;
+      var res = url.indexOf("chrome_ubuntu")
+
       // calculate the base pair range of each idex using reverse
       // this is the bottom list of links
-      divElem.append("<a class='jumpLink' href="+hrefVal+ " title="+title+">"+i+"</a>");
-
-      // add the breaks after every 35 values to the bottom list of links
-      if (i % 35 == 0)
-        divElem.append("<br>");
+      // We don't want to append 800 additional elements to the DOM
+      if (res == -1)
+      {
+        divElem.append("<a class='jumpLink' href="+hrefVal+ " title="+title+">"+i+"</a>");
+        // add the breaks after every 35 values to the bottom list of links
+        if (i % 35 == 0)
+          divElem.append("<br>");
+      }
     }
   }
 }
+
+$(document).ready(function(){
+  $(function() {
+    $('.overviewLink').click(function(e){
+      $('a').removeClass('active');
+      $(this).addClass('active');
+    });
+  });
+});
