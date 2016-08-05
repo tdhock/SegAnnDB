@@ -164,12 +164,18 @@ function chromDisplay(svg, meta, plotter) {
     var width = meta["width_px"];
     var height = meta["height_px"];
     var profile_id = meta["profile"];
-    
+
     // modified the range : width -> meta["original_width"] 
     // as have hard set the width px to 1250px
+    // below is working fix for both plot_profile.pt and new.pt to get right 
+    // x values.
+    if (width == 1250)
+      if (meta["original_width"]) // this second if is for accomodating profile_old
+        width = meta["original_width"];
+
     var x = d3.scale.linear()
     .domain([1, meta["width_bases"]])
-    .range([0, meta["original_width"]]);
+    .range([0, width]);
     
     var y = d3.scale.linear()
     .domain([meta["logratio_min"], meta["logratio_max"]])
@@ -498,8 +504,14 @@ function chromDisplay(svg, meta, plotter) {
             // changing the x2 value to 1250, as each image will only be 1250
             // pixels long
             var guideActions = function(selection) {
+                var url = window.location.href;
+                var res = url.indexOf("profile_old");
+
+                if (res == -1)
+                    width = 1250;
+                
                 selection.attr("x1", 0)
-                .attr("x2", 1250)
+                .attr("x2", width)
                 .attr("y1", function(d) {
                     return y(d.logratio);
                 })
