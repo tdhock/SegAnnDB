@@ -1,7 +1,7 @@
 from pyramid.view import view_config
 from pyramid.exceptions import Forbidden
 from pyramid.httpexceptions import HTTPFound
-from pyramid.security import authenticated_userid
+# from pyramid.security import authenticated_userid
 from pyramid.response import FileResponse, Response
 from random import shuffle
 import pdb
@@ -13,6 +13,16 @@ from datetime import datetime
 import json
 
 # I am trying to override the authenticated_userid function here
+# retrieve the cookie and return to the user
+def authenticated_userid(request):
+    """This function returns the user_id from the request"""
+    try:
+        val = request.cookies["authtkt"]
+    except:
+        # in case the cookie is not found it applies, unauthenticated user
+        val = None;
+    print val
+    return val
 
 def add_userid(fn):
     def view(request):
