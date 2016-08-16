@@ -21,7 +21,7 @@ else
 {
   // okay the user is not logged in 
   // render the login button
-  var button = "<a href='/auth/signin'><button>Login</button></a>";
+  var button = "<a href='/auth/signin_redirect'><button>Login</button></a>";
   divElem.append(button);
 }
 
