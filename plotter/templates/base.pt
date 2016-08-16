@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 This is the base template. Every other template extends from this template.
-It handles basic user login/logout
+It handles basic user login/logout too
 -->
 <html>
 
