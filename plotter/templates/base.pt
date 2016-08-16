@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!--
+This is the base template. Every other template extends from this template.
+It handles basic user login/logout
+-->
 <html>
 
   <head>
@@ -14,17 +18,14 @@
     <script type="text/javascript" 
     src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
     </script>
-    <!-- <script src="https://login.persona.org/include.js"  -->
-    <!-- type="text/javascript"></script> -->
-    <!-- <script type="text/javascript">request.persona_js}</script> -->
     <script type="text/javascript" src="/static/custom.js"></script>
   </head>
 
   <body>
     <div id="container">
-      <!-- <div>SegAnnDB -->
-      <!-- user} request.persona_button}</div> -->
-
+      <div>SegAnnDB
+        ${user}</div>
+      <div id="auth"></div>
       <metal:content define-slot="content" />
 
     </div>
@@ -65,5 +66,6 @@
         </tr>
       </table>
     </footer>
+    <script type="text/javascript" src="/static/auth.js"></script>
   </body>
 </html>
