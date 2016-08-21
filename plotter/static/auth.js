@@ -14,14 +14,14 @@ var divElem = $("#auth");
 
 if (user != "") 
 {
-    var button = "<button onclick='bye()'>Log Out</button>";
+    var button = "<button id='signout' onclick='bye()'>Log Out</button>";
     divElem.append(button);
 }
 else
 {
   // okay the user is not logged in 
   // render the login button
-  var button = "<a href='/auth/signin_redirect'><button>Login</button></a>";
+  var button = "<a href='/auth/signin_redirect' id='signin'><button>Login</button></a>";
   divElem.append(button);
 }
 
