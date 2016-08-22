@@ -170,9 +170,6 @@ a.overviewLink:hover {
 }
 
 a.overviewLink:active {
-    border-bottom: 1px solid blue;
-    border-top: 1px solid red;
-    background-color: rgba(242, 6, 255, 0.2);
 }
 
 a.jumpLink {
@@ -212,4 +209,11 @@ footer {
   background-color: transparent;
   color: #D7E2EA;
   text-decoration: underline;
+}
+
+.activeLink
+{
+    border-bottom: 1px solid red;
+    border-top: 1px solid red;
+    background-color: rgba(6, 37, 255, 0.2);
 }

@@ -141,7 +141,6 @@ def home(request):
         'user': userid,
     }
     pname = 'nb18'
-    print request.persona_js
     print "------------------------------------"
     if pname in profile_names:
         info['plot'] = plotJS([pname], ['17'], 'standard')

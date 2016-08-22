@@ -1,6 +1,7 @@
 // Script to handle the creation of interactive overviews
 function drawJumps(rowData)
 {
+  console.log(rowData);
   // some Global Variables
   var STANDARD_WIDTH = 1250;
   var IPAD_WIDTH = 20000;
@@ -20,6 +21,8 @@ function drawJumps(rowData)
   var zoomLevel = rowData[0][0]["zoom"];
   var widthBase = rowData[0][0]["width_bases"];
 
+  // index of the profile we are viewing
+  var index = rowData[0][0]["index"];
 
   // get the number of links to generate
   var numLinks = zooms[zoomLevel] / STANDARD_WIDTH;
@@ -56,14 +59,25 @@ function drawJumps(rowData)
       // generate the title string
       var title = xstartBP + "-" + xendBP;
 
-      // make the string of link
-      var link = "<a class='overviewLink' style="+linkStyle+" href="+hrefVal+" title="+title+"></a>";
+      //lets get the url
+      var url = window.location.href;
+
+      // this if else handles the part which highlights the currently active
+      // region
+      if (i == index)
+      {
+        // add the additional activeLink class
+        var link = "<a class='overviewLink activeLink' style="+linkStyle+" href="+hrefVal+" title="+title+"></a>";
+      }
+      else
+      {
+        var link = "<a class='overviewLink' style="+linkStyle+" href="+hrefVal+" title="+title+"></a>";
+      }
 
       // append the links to overview
       overviewDiv.append(link);
 
       // lets see if we are in chrome_ubuntu
-      var url = window.location.href;
       var res = url.indexOf("chrome_ubuntu")
 
       // calculate the base pair range of each idex using reverse
