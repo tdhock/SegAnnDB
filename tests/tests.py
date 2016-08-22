@@ -163,34 +163,46 @@ class SegAnnTest(unittest.TestCase):
 
         driver.find_element_by_id('signin').click()
 
-        signin_window_handle = None
+        wait = WebDriverWait(driver, 60)
+
+        ### The Commented code was used to test for persona based login system
+        ### It is no longer in use. Can be safely removed
+        # signin_window_handle = None
 
         # iterating through all the handles to get the popup, since we only hve
         # one popup, making use of that
-        while not signin_window_handle:
-            for handle in driver.window_handles:
-                if handle != main_window_handle:
-                    signin_window_handle = handle
-                    break
+        # while not signin_window_handle:
+            # for handle in driver.window_handles:
+                # if handle != main_window_handle:
+                    # signin_window_handle = handle
+                    # break
 
         # switch to the signin popup
-        driver.switch_to.window(signin_window_handle)
-
-        wait = WebDriverWait(driver, 60)
-
-        email_field = wait.until(
-            EC.element_to_be_clickable((By.ID, "authentication_email")))
-
-        # this is the example user from mockmyid
-        email_field.send_keys("helloworld@mockmyid.com")
+        # driver.switch_to.window(signin_window_handle)
 
         # xpath id obtained using firebug for the next button on persona dialog
-        (driver.find_element_by_xpath(
-            "/html/body/div/section[1]/form/div[2]/div[1]/div/div[2]/p[4]/button[1]")
-            .click())
+        # (driver.find_element_by_xpath(
+            # "/html/body/div/section[1]/form/div[2]/div[1]/div/div[2]/p[4]/button[1]")
+            # .click())
 
         # switch to the main window
-        driver.switch_to.window(main_window_handle)
+        # driver.switch_to.window(main_window_handle)
+
+        # get the email field
+        email_field = wait.until(
+            EC.element_to_be_clickable((By.ID, "Email")))
+
+        # enter the email of test user
+        email_field.send_keys("seganntest@gmail.com")
+
+        # click next
+        driver.find_element_by_id('next').click()
+
+        # enter password
+        wait.until(EC.presence_of_element_located((By.ID, "Passwd"))).send_keys('segann@test')
+
+        # click next and wait for redirect
+        wait.until(EC.presence_of_element_located((By.ID, "signIn"))).click()
 
     def tearDown(self):
         self.driver.close()
