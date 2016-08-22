@@ -1,7 +1,6 @@
 // Script to handle the creation of interactive overviews
 function drawJumps(rowData)
 {
-  console.log(rowData);
   // some Global Variables
   var STANDARD_WIDTH = 1250;
   var IPAD_WIDTH = 20000;
@@ -93,12 +92,3 @@ function drawJumps(rowData)
     }
   }
 }
-
-$(document).ready(function(){
-  $(function() {
-    $('.overviewLink').click(function(e){
-      $('a').removeClass('active');
-      $(this).addClass('active');
-    });
-  });
-});

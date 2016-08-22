@@ -488,6 +488,26 @@ function chromDisplay(svg, meta, plotter) {
     
     this.updateModel = function(response) {
         
+        /*
+         We need to make changes to the response to show correct annotations
+         for each small part. 
+
+         We need to normalize the min and max values of each field as per the 
+         offset values.
+         e.g. We will have pixel range of: 0-1250 , 1250-2500, 2500-3750
+         We need to find what parts of min and max will be visible on what image
+         and then make changes to values. We can use a d3 linear scale.
+        */
+
+        // normalization of min and max must only happen when we are in the
+        // new chrom viewer
+        for (o in response)
+        {
+            console.log(o);
+            console.log(response[o]);
+            //Normalize segments, annotations, breakpoints_regions based on the offset value and the index we are using!!
+        }            
+
         // the response contains ids of everything onscreen that has
         // changed.
         if (response.segments) {
