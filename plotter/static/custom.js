@@ -20,6 +20,8 @@ function drawJumps(rowData)
   var zoomLevel = rowData[0][0]["zoom"];
   var widthBase = rowData[0][0]["width_bases"];
 
+  // index of the profile we are viewing
+  var index = rowData[0][0]["index"];
 
   // get the number of links to generate
   var numLinks = zooms[zoomLevel] / STANDARD_WIDTH;
@@ -56,19 +58,37 @@ function drawJumps(rowData)
       // generate the title string
       var title = xstartBP + "-" + xendBP;
 
-      // make the string of link
-      var link = "<a class='overviewLink' style="+linkStyle+" href="+hrefVal+" title="+title+"></a>";
+      //lets get the url
+      var url = window.location.href;
+
+      // this if else handles the part which highlights the currently active
+      // region
+      if (i == index)
+      {
+        // add the additional activeLink class
+        var link = "<a class='overviewLink activeLink' style="+linkStyle+" href="+hrefVal+" title="+title+"></a>";
+      }
+      else
+      {
+        var link = "<a class='overviewLink' style="+linkStyle+" href="+hrefVal+" title="+title+"></a>";
+      }
 
       // append the links to overview
       overviewDiv.append(link);
 
+      // lets see if we are in chrome_ubuntu
+      var res = url.indexOf("chrome_ubuntu")
+
       // calculate the base pair range of each idex using reverse
       // this is the bottom list of links
-      divElem.append("<a class='jumpLink' href="+hrefVal+ " title="+title+">"+i+"</a>");
-
-      // add the breaks after every 35 values to the bottom list of links
-      if (i % 35 == 0)
-        divElem.append("<br>");
+      // We don't want to append 800 additional elements to the DOM
+      if (res == -1)
+      {
+        divElem.append("<a class='jumpLink' href="+hrefVal+ " title="+title+">"+i+"</a>");
+        // add the breaks after every 35 values to the bottom list of links
+        if (i % 35 == 0)
+          divElem.append("<br>");
+      }
     }
   }
 }

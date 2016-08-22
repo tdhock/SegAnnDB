@@ -17,13 +17,16 @@
 
     <a href="?width=${width}&index=${index_next}">Next</a>
 
+    <br>
+    <a href="/profile_old/${name}/${chr}/?width=${width}">Go to old profile viewer</a>
+
     <p>Jump directly to part - </p>
     <div id = "random_jumps">
     </div>
 
     <br>
 
-    <div class="footer">
+    <div class="">
       <p>
         This is chr${chr} of profile ${name}.  Plot size:
         <a tal:repeat="z others" href="?width=${z}">

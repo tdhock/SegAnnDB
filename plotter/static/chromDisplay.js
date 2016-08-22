@@ -164,12 +164,18 @@ function chromDisplay(svg, meta, plotter) {
     var width = meta["width_px"];
     var height = meta["height_px"];
     var profile_id = meta["profile"];
-    
+
     // modified the range : width -> meta["original_width"] 
     // as have hard set the width px to 1250px
+    // below is working fix for both plot_profile.pt and new.pt to get right 
+    // x values.
+    if (width == 1250)
+      if (meta["original_width"]) // this second if is for accomodating profile_old
+        width = meta["original_width"];
+
     var x = d3.scale.linear()
     .domain([1, meta["width_bases"]])
-    .range([0, meta["original_width"]]);
+    .range([0, width]);
     
     var y = d3.scale.linear()
     .domain([meta["logratio_min"], meta["logratio_max"]])
@@ -482,6 +488,26 @@ function chromDisplay(svg, meta, plotter) {
     
     this.updateModel = function(response) {
         
+        /*
+         We need to make changes to the response to show correct annotations
+         for each small part. 
+
+         We need to normalize the min and max values of each field as per the 
+         offset values.
+         e.g. We will have pixel range of: 0-1250 , 1250-2500, 2500-3750
+         We need to find what parts of min and max will be visible on what image
+         and then make changes to values. We can use a d3 linear scale.
+        */
+
+        // normalization of min and max must only happen when we are in the
+        // new chrom viewer
+        for (o in response)
+        {
+            console.log(o);
+            console.log(response[o]);
+            //Normalize segments, annotations, breakpoints_regions based on the offset value and the index we are using!!
+        }            
+
         // the response contains ids of everything onscreen that has
         // changed.
         if (response.segments) {
@@ -498,8 +524,14 @@ function chromDisplay(svg, meta, plotter) {
             // changing the x2 value to 1250, as each image will only be 1250
             // pixels long
             var guideActions = function(selection) {
+                var url = window.location.href;
+                var res = url.indexOf("profile_old");
+
+                if (res == -1)
+                    width = 1250;
+                
                 selection.attr("x1", 0)
-                .attr("x2", 1250)
+                .attr("x2", width)
                 .attr("y1", function(d) {
                     return y(d.logratio);
                 })
