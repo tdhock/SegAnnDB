@@ -166,20 +166,28 @@ def close_db():
     env.close()
 atexit.register(close_db)
 
+DB_CLASSES = []
 
 class DB(type):
-
+    """Metaclass for Resource objects"""
     def __init__(cls, name, bases, dct):
-        cls.filename = name
-        cls.db = bsddb3.db.DB(env)
-        if cls.RE_LEN:
-            cls.db.set_re_len(cls.RE_LEN)
-        cls.db.open(cls.filename, None, cls.DBTYPE,
-                    bsddb3.db.DB_AUTO_COMMIT |
-                    # bsddb3.db.DB_THREAD|
-                    bsddb3.db.DB_CREATE)
-        CLOSE_ON_EXIT.append(cls.db)
+        """Called when Resource and each subclass is defined"""
+        if "keys" in dir(cls):
+            DB_CLASSES.append(cls)
+            cls.filename = name
+            cls.db = bsddb3.db.DB(env)
+            if cls.RE_LEN:
+                cls.db.set_re_len(cls.RE_LEN)
+            cls.db.open(cls.filename, None, cls.DBTYPE,
+                        bsddb3.db.DB_AUTO_COMMIT |
+                        # bsddb3.db.DB_THREAD|
+                        bsddb3.db.DB_CREATE)
+            CLOSE_ON_EXIT.append(cls.db)
 
+def rename_all(find, replace):
+    for cls in DB_CLASSES:
+        if all([k in cls.keys for k in find.keys()]):
+            cls.rename_all(find, replace)
 
 class Resource(object):
     __metaclass__ = DB
@@ -188,19 +196,82 @@ class Resource(object):
 
     @classmethod
     def all(cls):
-        return [cls(k).get() for k in cls.db.keys()]
+        return [cls(*tup).get() for tup in cls.db_key_tuples()]
 
     @classmethod
     def db_keys(cls):
         return cls.db.keys()
 
     @classmethod
+    def db_key_tuples(cls):
+        return [k.split(" ") for k in cls.db_keys()]
+
+    def rename(self, **kwargs):
+        """Read data for this key, delete that db entry, and save it under another key"""
+        for k in kwargs:
+            if k not in self.keys:
+                raise ValueError(
+                    "names of arguments must be db keys: " +
+                    ", ".join([str(x) for x in self.keys]))
+        data_dict = self.get()
+        self.put(None)
+        self.info.update(kwargs)
+        self.values = tuple(self.info[k] for k in self.keys)
+        self.set_db_key()
+        self.put(data_dict)
+    
+    @classmethod
+    def rename_all(cls, find, replace):
+        """Call rename for all entries in this DB
+
+        find is a dictionary used to search for entries in this DB;
+        entry.rename(**replace) will be called for each of the entries
+        found.
+
+        """
+        entry_list = []
+        all_entries = cls.db_key_tuples()
+        for tup in all_entries:
+            entry = cls(*tup)
+            match_list = [entry.info[k]==v for k,v in find.iteritems()]
+            if all(match_list):
+                entry_list.append(entry)
+        print "%s %4d / %4d %s."%(
+            cls.__name__,
+            len(entry_list), 
+            len(all_entries),
+            "entry matches" if len(entry_list)==1 else "entries match",
+        )
+        for i, entry in enumerate(entry_list):
+            old_db_key = entry.db_key
+            entry.rename(**replace)
+            print "%s %4d / %4d '%s' -> '%s'"%(
+                cls.__name__, 
+                i+1,
+                len(entry_list),
+                old_db_key, 
+                entry.db_key,
+            )
+
+    @classmethod
     def has_key(cls, k):
         return k in cls.db
 
     def __init__(self, *args):
+        if len(args) != len(self.keys):
+            raise ValueError(
+                "should have exactly %d args: %s"%(
+                    len(self.keys),
+                    ", ".join([str(x) for x in self.keys]),
+                              ))
+        for a in args:
+            if " " in a:
+                raise ValueError("values should have no spaces")
         self.values = args
         self.info = dict(zip(self.keys, self.values))
+        self.set_db_key()
+
+    def set_db_key(self):
         self.db_key = " ".join([str(x) for x in self.values])
 
     def alter(self, fun):
@@ -289,8 +360,6 @@ class UserError(Container):
 class Regions(Container):
 
     """Dict of annotated regions."""
-
-    keys = ("user", "name", "chrom")
 
     def add_item(self, D):
         self.item["id"] = D["next"]
@@ -604,7 +673,7 @@ class Profile(Resource):
     keys = ("name", )
     RELATED = (
         "Regions", "Profile", "Models",
-        "AnnotationCounts", "DisplayedModel", "DisplayedProfile",
+        "AnnotationCounts", "DisplayedProfile",
         "ChromProbes", "ModelError",
         )
 
@@ -792,10 +861,12 @@ class Models(Resource):
 
 
 class Breakpoints(Regions):
+    keys = ("user", "name", "chrom")
     pass
 
 
 class Copies(Regions):
+    keys = ("user", "name", "chrom")
     pass
 
 REGION_TABLES = (
@@ -1015,49 +1086,6 @@ def chrom_model(models, error, regions, profile, ch, user,
     return model
 
 
-class DisplayedModel(Resource):
-    keys = ("user", "name", "chr")
-
-    def make_details(self):
-        chrom_meta = getattr(self, "chrom_meta", None)
-        if chrom_meta is None:
-            p = Profile(self.info["name"]).get()
-            chrom_meta = p["chrom_meta"][self.info["chr"]]
-        user_model = UserModel(self.info["user"])
-        penalty_value = user_model.predict(chrom_meta["features"])
-        segments = optimal_segments(penalty_value, chrom_meta["intervals"])
-        models = Models(self.info["name"], self.info["chr"]).get()
-        model = models[segments-1]["json"]
-        # TODO: look up existing annotations and use them!
-        for segment in model["segments"]:
-            segment["annotation"] = "unlabeled"
-            segment["copies"] = {}
-        return model
-
-    def add(self, region):
-        self.region = region
-        return self.alter(self.add_region)
-
-    def remove(self, region):
-        self.region = region
-        return self.alter(self.remove_region)
-
-    def add_region(self, model):
-        segment = region_in_segment(self.region, model["segments"])
-        ann = self.region["annotation"]
-        segment["copies"][self.region["id"]] = ann
-        label_segment(ann, segment)
-        return model
-
-    def remove_region(self, model):
-        segment = region_in_segment(self.region, model["segments"])
-        segment["annotation"] = "unlabeled"
-        segment["copies"].pop(self.region["id"])
-        for ann in segment["copies"].values():
-            label_segment(ann, segment)
-        return model
-
-
 class DisplayedProfile(Resource):
 
     """All the current segments and copy number predictions."""
@@ -1138,6 +1166,8 @@ def label_segment(ann, segment):
 class ProfileQueue(Resource):
     DBTYPE = bsddb3.db.DB_QUEUE
     RE_LEN = 50
+
+    keys = ("name", )
 
     @classmethod
     def process_one(cls):
