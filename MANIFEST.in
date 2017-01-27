@@ -1,0 +1,2 @@
+include plotter/templates/*
+include plotter/static/*
