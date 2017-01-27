@@ -12,7 +12,7 @@
     </div>
 
     <!--Adding a link to the new chrom_viewer starting from index 1-->
-    <a href="/profile/${name}/${chr}/?width=${width}&index=1">View in new chrom viewer</a>
+    <a href="/profile_new/${name}/${chr}/?width=${width}&index=1">View in new chrom viewer</a>
     <p>
       This is chr${chr} of profile ${name}.  Plot size:
 	<a tal:repeat="z others" href="?width=${z}">

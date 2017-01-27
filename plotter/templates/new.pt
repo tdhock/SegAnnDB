@@ -18,7 +18,7 @@
     <a href="?width=${width}&index=${index_next}">Next</a>
 
     <br>
-    <a href="/profile_old/${name}/${chr}/?width=${width}">Go to old profile viewer</a>
+    <a href="/profile/${name}/${chr}/?width=${width}">Go to old profile viewer</a>
 
     <p>Jump directly to part - </p>
     <div id = "random_jumps">

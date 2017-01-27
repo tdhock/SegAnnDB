@@ -3,11 +3,12 @@ import os
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(here, 'README.org')).read()
+README = open(os.path.join(here, 'README.md')).read()
 CHANGES = open(os.path.join(here, 'NEWS_TODO.org')).read()
 
 requires = [
     'pyramid',
+    'seganndb_login',
     'pyramid_debugtoolbar',
     'waitress',
     ]
@@ -28,6 +29,10 @@ setup(name='plotter',
       keywords='web pyramid pylons',
       packages=find_packages(),
       include_package_data=True,
+      package_data={
+          "templates":["*"],
+          "static":["*"],
+      },
       zip_safe=False,
       install_requires=requires,
       tests_require=requires,

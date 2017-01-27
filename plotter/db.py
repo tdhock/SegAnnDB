@@ -56,8 +56,8 @@ LINE_PATTERNS = [
 COLUMN_SEP = r'\s+'
 LINE_PATTERN = "^%s$" % COLUMN_SEP.join(LINE_PATTERNS)
 LINE_REGEX = re.compile(LINE_PATTERN)
-#FILE_PREFIX = "/var/www"
-FILE_PREFIX = "."
+FILE_PREFIX = "/var/www"
+#FILE_PREFIX = "."
 SECRET_DIR = os.path.join(FILE_PREFIX, "secret")
 DB_HOME = os.path.join(FILE_PREFIX, "db")
 CHROMLENGTH_DIR = os.path.join(FILE_PREFIX, "chromlength")
@@ -93,7 +93,7 @@ def scatterplot_file(name, ch, suffix, lr_min, lr_max, width, lengths=None):
         pinfo = Profile(name).get()
         lengths = ChromLengths(pinfo["db"])
     #print fn, md, len(info["logratio"])
-    scatterplot.draw(info, secret_file(fn, ch),
+    scatterplot.draw(info, secret_file(fn),
                      int(width), HEIGHT_PX,
                      float(lr_min), float(lr_max),
                      1, lengths[ch])
@@ -119,7 +119,7 @@ def split_image(file_name, chr_num, profile_name, suffix, width):
     j = 1
 
     while i <= width:
-        print i
+        #print i
         box = (i - 1250, 0, i, 200)
         img = im.crop(box)
         fn = "%s_chr%s_%s_%d.png" % (profile_name, chr_num, suffix, j)
@@ -581,6 +581,24 @@ http://bioviz.rocq.inria.fr/export/%(user)s/%(name)s/breaks/bed/
 http://bioviz.rocq.inria.fr/export/%(user)s/%(name)s/copies/bed/
 """
 
+def reprocess_all_profiles():
+    for pname in Profile.db_keys():
+        pro=Profile(pname)
+        d = pro.get()
+        d["ready"]=False
+        pro.put(d)
+    print "all profiles set to ready=False"
+
+def all_profiles_ready():
+    for pname in Profile.db_keys():
+        pro=Profile(pname)
+        d = pro.get()
+        d["ready"]=True
+        pro.put(d)
+    print "all profiles set to ready=True"
+    while db.ProfileQueue.db.consume():
+        pass
+    print "ProfileQueue is empty"
 
 class Profile(Resource):
     keys = ("name", )
@@ -756,8 +774,8 @@ class Profile(Resource):
                                              lr_min, lr_max,
                                              width, bases),
                     }
-                print "file created: ", meta["plots"][name]["file"]
-                print "---------------"
+                #print "file created: ", meta["plots"][name]["file"]
+                #print "---------------"
                 if meta["plots"][name]["width_px"] > DEFAULT_WIDTH :
                     split_image(meta["plots"][name]["file"], ch, pinfo["name"], name, width)
             # print "meta- ",meta
@@ -1133,7 +1151,6 @@ class ProfileQueue(Resource):
         recid, name = cls.db.consume_wait()
         pro = Profile(name.strip())  # need to remove queue padding.
         pro.process()
-
 
 class ChromProbes(Resource):
     keys = ("name", "chrom")

@@ -76,15 +76,16 @@ function profilePlot(rowList) {
             // scatterurl was modified in order to make it work with the new fiile
             // keeping scheme
             var fileName = "";
-            if (d.zoom == undefined || d.index_suffix == undefined)
-            {
-              d.zoom = "";
-              d.index_suffix = "";
-              fileName = d.file;
-            }
-            else
-              fileName = d.profile + "_chr" + d.chr + "_" + d.zoom + d.index_suffix + ".png";
-            var scatter_url = "/secret/" + d.profile + "/" + d.chr + "/" + fileName;
+	    var scatter_url;
+            if (d.zoom == undefined || d.index_suffix == undefined){
+		d.zoom = "";
+		d.index_suffix = "";
+		fileName = d.file;
+		scatter_url = "/secret/" + d.profile + "/" + fileName;
+            }else{
+		fileName = d.profile + "_chr" + d.chr + "_" + d.zoom + d.index_suffix + ".png";
+		scatter_url = "/secret/" + d.profile + "/" + d.chr + "/" + fileName;
+	    }
             return "url('" + scatter_url + "')";
         })
         ;
@@ -527,8 +528,8 @@ function chromDisplay(svg, meta, plotter) {
                 var url = window.location.href;
                 var res = url.indexOf("profile_old");
 
-                if (res == -1)
-                    width = 1250;
+                // if (res == -1)
+                //     width = 1250;
                 
                 selection.attr("x1", 0)
                 .attr("x2", width)

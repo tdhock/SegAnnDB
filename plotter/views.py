@@ -104,14 +104,14 @@ def delete_profile(request):
     return response
 
 
-# @view_config(route_name="secret")
-# @check_export
-# def secret(request):
-    # fn = db.secret_file("%(name)s%(suffix)s" % request.matchdict)
-    # return FileResponse(fn, request=request)
-
-
 @view_config(route_name="secret")
+@check_export
+def secret(request):
+    fn = db.secret_file("%(name)s%(suffix)s" % request.matchdict)
+    return FileResponse(fn, request=request)
+
+
+@view_config(route_name="secret_new")
 def secret_new(request):
     """
     New secret view for the new chromosome viewer.
@@ -336,56 +336,6 @@ def delete_region(request):
     return result
 
 
-@view_config(route_name='chrom', renderer='templates/new.pt')
-@add_userid
-@check_userprofiles
-def hello(request):
-    """
-    TODO: Add more documentation about this method.
-    Related to the new chrom viewer
-    """
-    w = request.GET.get("width", "standard")
-    i = request.GET.get("index", "")
-    md = request.matchdict
-    out = prof_info(md["name"], md["chr"].split(','), w)
-    out["name"] = md["name"]
-    out["width"] = w
-    out["others"] = [z for z in CHROM_ZOOMS if z != w]
-    out["chr"] = md["chr"]
-
-    # in case of standard width we want to send the correct suffixes
-    #
-    # index = index of the image we are going to show. No index will output the
-    #         full image for that zoom level.
-    #
-    # index_next = the next index , right after the current index
-    # index_prev = the prev index, right before the curernt index
-    # index_suffix = used to generate the image file name in the js code
-
-    if w == "standard":
-        out["index"] = 0
-        out["index_next"] = ""
-        out["index_prev"] = ""
-        out["index_suffix"] = ""
-    else:
-        out["index"] = i
-        out["index_suffix"] = "_" + i
-
-        if i == "":
-            # means, we want to view the full zoom level
-            out["index_next"] = "1"
-            out["index_prev"] = ""
-            out["index_suffix"] = ""
-        elif int(i) == 1:
-            out["index_next"] = str(int(i)+1)
-            out["index_prev"] = "1"
-        else:
-            out["index_next"] = str(int(i)+1)
-            out["index_prev"] = str(int(i)-1)
-
-    return out
-
-
 def update_model(models, error, regions, profile, ch, user):
     """Used in add/remove breakpoint regions."""
     # store error for learning later.
@@ -454,7 +404,7 @@ TODO: Need to rework it so that old chrom viewer works as well
              renderer="templates/plot_chrom.pt")
 @add_userid
 @check_userprofiles
-def chrom(request):
+def old_chrom(request):
     w = request.GET.get("width", "standard")
     md = request.matchdict
     out = prof_info(md["name"], md["chr"].split(','), w)
@@ -462,6 +412,55 @@ def chrom(request):
     out["width"] = w
     out["others"] = [z for z in CHROM_ZOOMS if z != w]
     out["chr"] = md["chr"]
+    return out
+
+@view_config(route_name='new_chrom', renderer='templates/new.pt')
+@add_userid
+@check_userprofiles
+def new_chrom(request):
+    """
+    TODO: Add more documentation about this method.
+    Related to the new chrom viewer
+    """
+    w = request.GET.get("width", "standard")
+    i = request.GET.get("index", "")
+    md = request.matchdict
+    out = prof_info(md["name"], md["chr"].split(','), w)
+    out["name"] = md["name"]
+    out["width"] = w
+    out["others"] = [z for z in CHROM_ZOOMS if z != w]
+    out["chr"] = md["chr"]
+
+    # in case of standard width we want to send the correct suffixes
+    #
+    # index = index of the image we are going to show. No index will output the
+    #         full image for that zoom level.
+    #
+    # index_next = the next index , right after the current index
+    # index_prev = the prev index, right before the curernt index
+    # index_suffix = used to generate the image file name in the js code
+
+    if w == "standard":
+        out["index"] = 0
+        out["index_next"] = ""
+        out["index_prev"] = ""
+        out["index_suffix"] = ""
+    else:
+        out["index"] = i
+        out["index_suffix"] = "_" + i
+
+        if i == "":
+            # means, we want to view the full zoom level
+            out["index_next"] = "1"
+            out["index_prev"] = ""
+            out["index_suffix"] = ""
+        elif int(i) == 1:
+            out["index_next"] = str(int(i)+1)
+            out["index_prev"] = "1"
+        else:
+            out["index_next"] = str(int(i)+1)
+            out["index_prev"] = str(int(i)-1)
+
     return out
 
 
