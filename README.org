@@ -1,8 +1,12 @@
 SegAnnDB: supervised machine learning for interactive DNA copy number analysis
 
-** Background / motivation
+** Background, usage
 
-Please read our [[http://www.ncbi.nlm.nih.gov/pubmed/24493034][Bioinformatics 2014 paper]].
+Background: please read our [[http://www.ncbi.nlm.nih.gov/pubmed/24493034][Bioinformatics 2014 paper]].
+
+Usage demos on YouTube: 
+- [[https://www.youtube.com/watch?v=BuB5RNASHjU][basic labeling]] (2 min)
+- [[https://www.youtube.com/watch?v=al0kk1JWsr0][zooming, labeling, and exporting high-density profiles]] (9 min)
 
 ** Installation
 
