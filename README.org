@@ -1,0 +1,22 @@
+SegAnnDB: supervised machine learning for interactive DNA copy number analysis
+
+** Background / motivation
+
+Please read our [[http://www.ncbi.nlm.nih.gov/pubmed/24493034][Bioinformatics 2014 paper]].
+
+** Installation
+
+See [[file:INSTALL.sh]] to install on your own server, or Abhishek's [[https://abstatic.github.io/docker-segann.html][blog
+post to use our docker image]].
+
+** Testing
+
+We use selenium webdriver for testing. To start the test suite, first
+install selenium using
+
+#+BEGIN_SRC shell-script
+pip install selenium=2.53.2
+#+END_SRC
+
+Then run [[file:tests/tests.py]]
+
