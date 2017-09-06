@@ -264,10 +264,10 @@ class Resource(object):
                     len(self.keys),
                     ", ".join([str(x) for x in self.keys]),
                               ))
-        for a in args:
+        self.values = [str(a) for a in args]
+        for a in self.values:
             if " " in a:
                 raise ValueError("values should have no spaces")
-        self.values = args
         self.info = dict(zip(self.keys, self.values))
         self.set_db_key()
 
