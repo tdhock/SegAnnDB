@@ -1,5 +1,31 @@
 TODO
 
+BerkeleyDB accumulates log files which must be periodically deleted,
+and we should have a daemon that does this...
+http://www-rohan.sdsu.edu/doc/BerkeleyDB/ref/transapp/logfile.html
+
+Unit tests using Pyramid recommendations, for example when a profile
+is processed (plotter.db.Profile.process) test for presence of objects
+in the database, and then when the profile is deleted, check for
+deletion of relvant objects and files (PNG scatterplots,
+probes.bedGraph.gz data).
+
+Integration with Galaxy? From within Galaxy, is it possible to store
+the annotated regions in a database and display an updated
+segmentation model?
+https://wiki.galaxyproject.org/VisualizationsRegistry
+
+2017.01.27
+
+Faster deletion. SegAnnDB uses BerkeleyDB, which is very fast but
+makes updating and deleting profiles a bit tricky. I have started
+writing a view (plotter.views.delete_profiles) for profile deletion
+along with some database support (plotter.db.Profile.delete), but it
+is a slow O(ND) operation where T is the number of databases and N is
+the average number of items in each database. Deleting one profile
+should be an O(1) operation.
+
+ALMOST FIXED IN GSOC2016, waiting for final bugfixes from abstatic:
 Add support for browsers that do not render large PNG images. SegAnnDB
 currently uses very large PNGs to visualize DNA copy number profiles,
 but these are not supported by all browsers.
@@ -15,37 +41,6 @@ would be
 e.g. http://bioviz.rocq.inria.fr/profile/dr3hg19/2/1000000:2000000/
 and those pages would contain 1500 x 200 pixel images, and provide
 links to the areas before and after on that same chromosome.
-
-Social features for sharing annotations. SegAnnDB currently lets a
-user login using Mozilla Persona and then add user-specific annotated
-region labels. These annotations are currently only accessible to the
-user that creates them, but it would be nice to be able to share them
-with others. For example, Alice annotates some data then types the
-email address of her friend Bob into a web form. Bob then receives an
-email with a web link where he can view Alice's annoatations.
-
-Faster deletion. SegAnnDB uses BerkeleyDB, which is very fast but
-makes updating and deleting profiles a bit tricky. I have started
-writing a view (plotter.views.delete_profiles) for profile deletion
-along with some database support (plotter.db.Profile.delete), but it
-is a slow O(ND) operation where T is the number of databases and N is
-the average number of items in each database. Deleting one profile
-should be an O(1) operation.
-
-BerkeleyDB accumulates log files which must be periodically deleted,
-and we should have a daemon that does this...
-http://www-rohan.sdsu.edu/doc/BerkeleyDB/ref/transapp/logfile.html
-
-Unit tests using Pyramid recommendations, for example when a profile
-is processed (plotter.db.Profile.process) test for presence of objects
-in the database, and then when the profile is deleted, check for
-deletion of relvant objects and files (PNG scatterplots,
-probes.bedGraph.gz data).
-
-Integration with Galaxy? From within Galaxy, is it possible to store
-the annotated regions in a database and display an updated
-segmentation model?
-https://wiki.galaxyproject.org/VisualizationsRegistry
 
 2015.12.10
 

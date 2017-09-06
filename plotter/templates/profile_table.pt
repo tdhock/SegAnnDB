@@ -43,7 +43,7 @@ data. </p>
     <td>${p.share}</td>
     <td class="numeric">${p.probes}</td>
 
-    <td><a href="/secret/${p.name}.bedGraph.gz">
+    <td><a href="/secret/${p.name}/${p.name}.bedGraph.gz">
     bedGraph.gz</a></td>
 
     <td tal:condition="p.ready" class="numeric">
