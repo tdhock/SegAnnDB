@@ -845,8 +845,8 @@ class Profile(Resource):
                     }
                 #print "file created: ", meta["plots"][name]["file"]
                 #print "---------------"
-                if meta["plots"][name]["width_px"] > DEFAULT_WIDTH :
-                    split_image(meta["plots"][name]["file"], ch, pinfo["name"], name, width)
+                #if meta["plots"][name]["width_px"] > DEFAULT_WIDTH :
+                #split_image(meta["plots"][name]["file"], ch, pinfo["name"], name, width)
             # print "meta- ",meta
             # print "\n\n\n\n----------\n\n\n\n\n"
         print "%s ready"%pinfo["name"]
