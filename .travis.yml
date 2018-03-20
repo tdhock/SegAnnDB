@@ -7,10 +7,11 @@ python:
   - "2.7"
 sudo: enabled
 install:
-  - sudo sh INSTALL.sh &
+  - sudo sh INSTALL.sh
   - wget https://github.com/mozilla/geckodriver/releases/download/v0.20.0/geckodriver-v0.20.0-linux32.tar.gz
   - tar -xvzf geckodriver-v0.20.0-linux32.tar.gz
   - PATH=$PATH:$(pwd)
+  - pip install selenium
 script:
   - cd tests
   - python tests.py
