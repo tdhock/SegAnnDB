@@ -44,4 +44,4 @@ sudo wget -O /var/www/chromlength/hg19.txt.gz http://hgdownload.soe.ucsc.edu/gol
 # start the local server and 2 daemons (profile processing and
 # learning).
 mkdir db secret chromlength
-bash recover-restart.sh
+bash recover-restart.sh &
