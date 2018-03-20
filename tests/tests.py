@@ -3,6 +3,7 @@ import time
 import urllib
 import os
 import urllib2
+from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -190,19 +191,16 @@ class SegAnnTest(unittest.TestCase):
 
         # get the email field
         email_field = wait.until(
-            EC.element_to_be_clickable((By.ID, "Email")))
+            EC.element_to_be_clickable((By.ID, "identifierId")))
 
         # enter the email of test user
         email_field.send_keys("seganntest@gmail.com")
-
+	sleep(3)
         # click next
-        driver.find_element_by_id('next').click()
-
+        driver.find_element_by_id('identifierNext').click()
+	sleep(3)
         # enter password
-        wait.until(EC.presence_of_element_located((By.ID, "Passwd"))).send_keys('segann@test')
-
-        # click next and wait for redirect
-        wait.until(EC.presence_of_element_located((By.ID, "signIn"))).click()
+        wait.until(EC.presence_of_element_located((By.NAME, "password"))).send_keys('segann@test',Keys.RETURN)
 
     def tearDown(self):
         self.driver.close()

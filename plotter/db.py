@@ -672,7 +672,8 @@ def all_profiles_ready():
 class Profile(Resource):
     keys = ("name", )
     RELATED = (
-        "Regions", "Profile", "Models",
+        "Breakpoints", "Copies",
+	"Profile", "Models",
         "AnnotationCounts", "DisplayedProfile",
         "ChromProbes", "ModelError",
         )
