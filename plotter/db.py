@@ -671,12 +671,8 @@ def all_profiles_ready():
 
 class Profile(Resource):
     keys = ("name", )
-    RELATED = (
-        "Breakpoints", "Copies",
-	"Profile", "Models",
-        "AnnotationCounts", "DisplayedProfile",
-        "ChromProbes", "ModelError",
-        )
+    RELATED = ("Breakpoints","Copies", "Profile", "Models", "AnnotationCounts", "DisplayedProfile","ChromProbes", "ModelError",)
+
 
     def delete(self):
         """Delete all info for this profile.
