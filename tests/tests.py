@@ -145,6 +145,7 @@ class SegAnnTest(unittest.TestCase):
         if ("deleted" in driver.page_source):
             assert True
         else:
+            print driver.page_source
             assert False
 
     def login(self, driver):
