@@ -206,7 +206,7 @@ class SegAnnTest(unittest.TestCase):
             EC.element_to_be_clickable((By.ID, "identifierId")))
 
         # enter the email of test user
-        email_field.send_keys("seganntest@gmail.com")
+        email_field.send_keys("seganntest2@gmail.com")
 	sleep(10)
         # click next
         driver.find_element_by_id('identifierNext').click()
