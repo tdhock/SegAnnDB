@@ -20,7 +20,7 @@ python setup.py build
 sudo python setup.py install
 
 # Download/install SegAnnDB.
-if ["$TRAVIS" == "true"];
+if [ $TRAVIS=="true" ];
 then
 cd
 cd SegAnnDB
