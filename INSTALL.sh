@@ -20,9 +20,15 @@ python setup.py build
 sudo python setup.py install
 
 # Download/install SegAnnDB.
+if ["$TRAVIS" == "true"];
+then
+cd
+cd SegAnnDB
+else
 cd
 git clone https://github.com/tdhock/SegAnnDB.git
 cd SegAnnDB
+fi
 sed -i 's#^FILE_PREFIX.*$#FILE_PREFIX = "/var/www"#' plotter/db.py
 sudo python setup.py install
 
