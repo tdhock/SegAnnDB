@@ -1,6 +1,6 @@
 # The best web browser for viewing SegAnnDB is an
 # old version of google chrome, ca Mar 2013 - Jan 2014.
-http://google-chrome.en.uptodown.com/ubuntu/download/65857
+# http://google-chrome.en.uptodown.com/ubuntu/download/65857
 
 # Download python-dev and required packages.
 sudo apt-get install python-dev python-setuptools python-numpy python-bsddb3 subversion build-essential python-imaging db-util git
@@ -20,10 +20,8 @@ python setup.py build
 sudo python setup.py install
 
 # Download/install SegAnnDB.
-if [ $TRAVIS=="true" ];
-then
-cd
-cd SegAnnDB
+if [ "$TRAVIS" = "true" ]; then
+cd $TRAVIS_BUILD_DIR
 else
 cd
 git clone https://github.com/tdhock/SegAnnDB.git
@@ -37,11 +35,19 @@ sudo apt-get install apache2 libapache2-mod-wsgi
 cd /var/www
 sudo chown www-data .
 sudo -u www-data mkdir db secret chromlength
+if [ "$TRAVIS" = "true" ]; then
+sudo cp $TRAIVS_BUILD_DIR/apache.config /etc/apache2/sites-available/pyramid.conf
+else
 sudo cp ~/SegAnnDB/apache.config /etc/apache2/sites-available/pyramid.conf
+fi
 sudo a2enmod wsgi
 sudo a2dissite 000-default
 sudo a2ensite pyramid
+if [ "$TRAVIS" = "true" ]; then
+cd $TRAVIS_BUILD_DIR
+else
 cd ~/SegAnnDB
+fi
 bash server-recover-restart.sh
 # edit  production.ini: set public server name for persona! (NO TRAILING slash)
 # edit /etc/apache2/sites-available/pyramid.conf: add ServerName xxx.xxx.xxx.xxx
