@@ -21,11 +21,11 @@ sudo python setup.py install
 
 # Download/install SegAnnDB.
 if [ "$TRAVIS" = "true" ]; then
-cd $TRAVIS_BUILD_DIR
+    cd $TRAVIS_BUILD_DIR
 else
-cd
-git clone https://github.com/tdhock/SegAnnDB.git
-cd SegAnnDB
+    cd
+    git clone https://github.com/tdhock/SegAnnDB.git
+    cd SegAnnDB
 fi
 sed -i 's#^FILE_PREFIX.*$#FILE_PREFIX = "/var/www"#' plotter/db.py
 sudo python setup.py install
@@ -36,17 +36,18 @@ cd /var/www
 sudo chown www-data .
 sudo -u www-data mkdir db secret chromlength
 if [ "$TRAVIS" = "true" ]; then
-sudo cp $TRAIVS_BUILD_DIR/apache.config /etc/apache2/sites-available/pyramid.conf
+    sudo cp $TRAIVS_BUILD_DIR/apache.config \
+        /etc/apache2/sites-available/pyramid.conf
 else
-sudo cp ~/SegAnnDB/apache.config /etc/apache2/sites-available/pyramid.conf
+    sudo cp ~/SegAnnDB/apache.config /etc/apache2/sites-available/pyramid.conf
 fi
 sudo a2enmod wsgi
 sudo a2dissite 000-default
 sudo a2ensite pyramid
 if [ "$TRAVIS" = "true" ]; then
-cd $TRAVIS_BUILD_DIR
+    cd $TRAVIS_BUILD_DIR
 else
-cd ~/SegAnnDB
+    cd ~/SegAnnDB
 fi
 bash server-recover-restart.sh
 # edit  production.ini: set public server name for persona! (NO TRAILING slash)

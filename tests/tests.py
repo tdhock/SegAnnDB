@@ -228,7 +228,7 @@ if __name__ == "__main__":
     # now we check for existence of the test file
     # if it does not exist then we create it
     file_name = "test_profile.bedGraph.gz"
-    file_path = os.getcwd() + '/' + file_name
+    file_path = os.path.join(os.getcwd(), file_name)
     if os.path.isfile(file_path):
         print "Test file found!"
     else:
