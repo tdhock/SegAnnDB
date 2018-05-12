@@ -1,3 +1,5 @@
+[[https://travis-ci.org/tdhock/SegAnnDB][https://travis-ci.org/tdhock/SegAnnDB.png?branch=master]]
+
 SegAnnDB: supervised machine learning for interactive DNA copy number analysis
 
 ** Background, usage
