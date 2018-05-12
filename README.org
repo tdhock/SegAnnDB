@@ -24,3 +24,14 @@ pip install selenium=2.53.2
 
 Then run [[file:tests/tests.py]]
 
+** Scripts
+
+- [[file:server-start.sh]] runs db_recover to fix any database issues,
+  then runs [[file:process_daemon.py]] to start the profile processing
+  daemon, then runs [[file:learn_daemon.py]] to start the learning daemon,
+  then starts the apache/production server. ([[file:start.sh]] is the analog for the testing server)
+- [[file:server-stop.sh]] stops the apache/production server. 
+- [[file:server-recover-restart.sh]] runs server-stop and then server-start. ([[file:recover-restart.sh]] is the analog for the testing server)
+- [[file:server-reinitialize.sh]] deletes all database information, and reinitializes a fresh/new SegAnnDB. ([[file:reinitialize.sh]] is the analog for the testing server)
+
+
