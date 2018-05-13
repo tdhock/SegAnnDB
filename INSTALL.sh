@@ -36,7 +36,7 @@ cd /var/www
 sudo chown www-data .
 sudo -u www-data mkdir db secret chromlength
 if [ "$TRAVIS" = "true" ]; then
-    sudo cp $TRAIVS_BUILD_DIR/apache.config \
+    sudo cp $TRAVIS_BUILD_DIR/apache.config \
         /etc/apache2/sites-available/pyramid.conf
 else
     sudo cp ~/SegAnnDB/apache.config /etc/apache2/sites-available/pyramid.conf

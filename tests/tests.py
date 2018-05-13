@@ -19,7 +19,7 @@ class SegAnnTest(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         # enter the test_profile_path here
-        self.test_profile_path = os.getcwd() + "/test_profile.bedGraph.gz"
+        self.test_profile_path = os.path.join(os.getcwd(),"test_profile.bedGraph.gz")
 
     def test010_isSegAnnUp(self):
         """
