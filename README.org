@@ -22,5 +22,4 @@ install selenium using
 pip install selenium=2.53.2
 #+END_SRC
 
-Then run [[file:tests/tests.py]]
-
+Then install Firefox, run [[file:recover-restart.sh]], and then [[file:tests/tests.py]].
