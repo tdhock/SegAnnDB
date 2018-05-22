@@ -1,0 +1,17 @@
+<tool id="seganndb" name="SegAnnDB" version="0.1.0">
+    <requirements>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+        wget -O - '$server'/export/None/'$profile_name'/segments/bedGraph/ > '$output'
+    ]]></command>
+    <inputs>
+        <param name="server" label="Server" type="text" />
+        <param name="profile_name" label="Profile Name" type="text" />
+    </inputs>
+    <outputs>
+        <data format="bedGraph" name="output" />
+    </outputs>
+    <help><![CDATA[
+        TODO: Fill in help.
+    ]]></help>
+</tool>
