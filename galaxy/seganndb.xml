@@ -2,14 +2,16 @@
     <requirements>
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
-        wget -O - '$server'/export/None/'$profile_name'/segments/bedGraph/ > '$output'
+        wget -O - '$server'/export/None/'$profile_name'/segments/bedGraph/ > download.bedgraph;
+        sed '1d' download.bedgraph > trimmed.bedgraph;
+        sed 's/ \+/\t/g' trimmed.bedgraph > '$output'
     ]]></command>
     <inputs>
         <param name="server" label="Server" type="text" />
         <param name="profile_name" label="Profile Name" type="text" />
     </inputs>
     <outputs>
-        <data format="bedGraph" name="output" />
+        <data format="bedgraph" name="output" />
     </outputs>
     <help><![CDATA[
         TODO: Fill in help.
