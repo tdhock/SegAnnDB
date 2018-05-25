@@ -26,6 +26,17 @@ pip install selenium=2.53.2
 
 Then install Firefox, run [[file:recover-restart.sh]], and then [[file:tests/tests.py]].
 
+If running tests on [[https://travis-ci.org/][Travis]], Google may think that the test account is being hacked and lock it, 
+causing tests to fail.  To work around this do the following:
+
+1. Login to Google from your computer using the test account (and log out all other google accounts).
+2. Open https://www.google.com/accounts/DisplayUnlockCaptcha and push the button on the page.
+3. Push code and/or restart the Travis build.
+
+It is important to realize that this link provides unlimited access for 10 minutes only, so it is best to click it immediately 
+prior to pushing code or running a build.
+
+
 ** Scripts
 
 - [[file:server-start.sh]] runs db_recover to fix any database issues,
