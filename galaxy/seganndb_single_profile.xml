@@ -1,0 +1,29 @@
+<tool id="seganndb_single_profile" name="SegAnnDB Single Profile" version="1.0">
+    <requirements>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+        fixedname=`echo $user_name | sed 's/__at__/@/'`;
+        wget -O - $server/export/\$fixedname/$profile_name/segments/bedGraph/ > download.bedgraph;
+        sed '1d' download.bedgraph > trimmed.bedgraph;
+        sed 's/ \+/\t/g' trimmed.bedgraph > $bedgraph;
+        wget -O - $server/export/\$fixedname/$profile_name/regions/bed/ > regions.bed;
+        sed '1d' regions.bed > regions_trimmed.bed;
+        sed 's/ \+/\t/g' regions_trimmed.bed > $regions;
+        wget -O - $server/export/\$fixedname/$profile_name/copies/bed/ > copies.bed;
+        sed '1d' copies.bed > copies_trimmed.bed;
+        sed 's/ \+/\t/g' copies_trimmed.bed > $copies
+    ]]></command>
+    <inputs>
+        <param name="server" label="Server" type="text" />
+        <param name="user_name" label="User Name (Email)" type="text" />
+        <param name="profile_name" label="Profile Name" type="text" />
+    </inputs>
+    <outputs>
+        <data format="bedgraph" name="bedgraph" />
+        <data format="bed" name="regions" />
+        <data format="bed" name="copies" />
+    </outputs>
+    <help><![CDATA[
+        This tool pulls all files for one profile in SegAnnDB.
+    ]]></help>
+</tool>
