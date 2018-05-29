@@ -3,6 +3,7 @@ import time
 import urllib
 import os
 import urllib2
+from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -18,7 +19,7 @@ class SegAnnTest(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         # enter the test_profile_path here
-        self.test_profile_path = "./test_profile.bedGraph.gz"
+        self.test_profile_path = os.path.join(os.getcwd(),"test_profile.bedGraph.gz")
 
     def test010_isSegAnnUp(self):
         """
@@ -27,7 +28,7 @@ class SegAnnTest(unittest.TestCase):
         """
         print "Test#1 isSegAnnUp ?"
         driver = self.driver
-        driver.get("http://localhost:8080")
+        driver.get("http://127.0.0.1:8080")
         assert "SegAnnDB" in driver.title
 
     def test020_login(self):
@@ -38,7 +39,7 @@ class SegAnnTest(unittest.TestCase):
         print "Test#2 Persona login test"
 
         driver = self.driver
-        driver.get("http://localhost:8080")
+        driver.get("http://127.0.0.1:8080")
 
         # Call the login method to login the user
         self.login(driver)
@@ -54,7 +55,7 @@ class SegAnnTest(unittest.TestCase):
         print "Test#3 Profile upload test"
         # login into the app
         driver = self.driver
-        driver.get("http://localhost:8080/")
+        driver.get("http://127.0.0.1:8080/")
         self.login(driver)
 
         # make sure that we are logged in
@@ -63,7 +64,7 @@ class SegAnnTest(unittest.TestCase):
             EC.element_to_be_clickable((By.ID, "signout"))).is_displayed()
 
         # go to the upload page
-        driver.get("http://localhost:8080/upload")
+        driver.get("http://127.0.0.1:8080/upload")
 
         # in the upload file field, upload the file
         upload_field = driver.find_element_by_id("id_file")
@@ -95,7 +96,7 @@ class SegAnnTest(unittest.TestCase):
         time.sleep(60)
 
         driver = self.driver
-        driver.get("http://localhost:8080/")
+        driver.get("http://127.0.0.1:8080/")
         self.login(driver)
 
         # make sure that we are logged in
@@ -105,17 +106,15 @@ class SegAnnTest(unittest.TestCase):
 
         #
         url_for_annotation = (
-            "http://localhost:8080/add_region/ES0004/3/breakpoints/1breakpoint/46469264/67723671/")
+            "http://127.0.0.1:8080/add_region/ES0004/3/breakpoints/1breakpoint/46469264/67723671/")
 
         delete_annotation = (
-            "http://localhost:8080/delete_region/ES0004/3/breakpoints/0/")
-
+            "http://127.0.0.1:8080/delete_region/ES0004/3/breakpoints/0/")
         resp = urllib2.urlopen(url_for_annotation)
 
         if resp.getcode() != 200:
             print "Fail"
             assert False
-
         resp.close()
 
         del_resp = urllib2.urlopen(delete_annotation)
@@ -130,7 +129,7 @@ class SegAnnTest(unittest.TestCase):
         """
         print "Test#5 Profile Deleting test."
         driver = self.driver
-        driver.get("http://localhost:8080/")
+        driver.get("http://127.0.0.1:8080/")
         self.login(driver)
 
         # make sure that we are logged in
@@ -140,7 +139,7 @@ class SegAnnTest(unittest.TestCase):
 
         # this is a hack, we need to change it to something more generic.
         # plausible for now
-        driver.get("http://localhost:8080/delete_profile/ES0004/")
+        driver.get("http://127.0.0.1:8080/delete_profile/ES0004/")
 
         # how to assert ?
         if ("deleted" in driver.page_source):
@@ -157,7 +156,21 @@ class SegAnnTest(unittest.TestCase):
         Parameters:
             driver - reference to driver being used
         """
-        # this is the tricky part
+	#check if cookie file exists and is up to date
+	import os.path
+	if os.path.isfile('cookies.txt'):
+		fr = open('cookies.txt')
+		cookies = eval(fr.read())
+		for cookie in cookies:
+			if cookie["domain"] == "localhost" or cookie["domain"] == "127.0.0.1":
+				driver.get("http://127.0.0.1:8080/")
+				cookie["domain"] = "127.0.0.1"
+				driver.add_cookie(cookie)
+				driver.get("http://127.0.0.1:8080/")
+		return
+	# no usable cookie/cookie.txt, therefore let's switch back to localhost to get a cookie first
+	driver.get("http://localhost:8080/")
+	# this is the tricky part
         # We have to get the right handle for the correct popup login window
         main_window_handle = driver.current_window_handle
 
@@ -190,19 +203,23 @@ class SegAnnTest(unittest.TestCase):
 
         # get the email field
         email_field = wait.until(
-            EC.element_to_be_clickable((By.ID, "Email")))
+            EC.element_to_be_clickable((By.ID, "identifierId")))
 
         # enter the email of test user
-        email_field.send_keys("seganntest@gmail.com")
-
+        email_field.send_keys("seganntest2@gmail.com")
+	sleep(10)
         # click next
-        driver.find_element_by_id('next').click()
-
+        driver.find_element_by_id('identifierNext').click()
+	sleep(10)
         # enter password
-        wait.until(EC.presence_of_element_located((By.ID, "Passwd"))).send_keys('segann@test')
-
-        # click next and wait for redirect
-        wait.until(EC.presence_of_element_located((By.ID, "signIn"))).click()
+        wait.until(EC.presence_of_element_located((By.NAME, "password"))).send_keys('segann@test',Keys.RETURN)
+	wait = WebDriverWait(driver, 60)
+        assert wait.until(
+            EC.element_to_be_clickable((By.ID, "signout"))).is_displayed()  # This check is important so we get the localhost cookie
+        cookies = driver.get_cookies()
+        fw = open('cookies.txt','w')
+	fw.write(str(cookies))
+	fw.close()
 
     def tearDown(self):
         self.driver.close()
@@ -211,7 +228,7 @@ if __name__ == "__main__":
     # now we check for existence of the test file
     # if it does not exist then we create it
     file_name = "test_profile.bedGraph.gz"
-    file_path = "./" + file_name
+    file_path = os.path.join(os.getcwd(), file_name)
     if os.path.isfile(file_path):
         print "Test file found!"
     else:
