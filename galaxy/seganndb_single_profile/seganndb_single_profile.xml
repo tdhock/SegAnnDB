@@ -11,7 +11,10 @@
         sed 's/ \+/\t/g' regions_trimmed.bed > $regions;
         wget -O - $server/export/\$fixedname/$profile_name/copies/bed/ > copies.bed;
         sed '1d' copies.bed > copies_trimmed.bed;
-        sed 's/ \+/\t/g' copies_trimmed.bed > $copies
+        sed 's/ \+/\t/g' copies_trimmed.bed > $copies;
+        wget -O - $server/export/\$fixedname/$profile_name/breaks/bed/ > breakpoints.bed;
+        sed '1d' breakpoints.bed > breakpoints_trimmed.bed;
+        sed 's/ \+/\t/g' breakpoints_trimmed.bed > $breakpoints
     ]]></command>
     <inputs>
         <param name="server" label="Server" type="text" />
@@ -22,6 +25,7 @@
         <data format="bedgraph" name="bedgraph" />
         <data format="bed" name="regions" />
         <data format="bed" name="copies" />
+        <data format="bed" name="breakpoints" />
     </outputs>
     <help><![CDATA[
         This tool pulls all files for one profile in SegAnnDB.

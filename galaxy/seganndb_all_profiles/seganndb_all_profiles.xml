@@ -1,0 +1,24 @@
+<tool id="seganndb_all_profiles" name="SegAnnDB Multi Profile" version="1.0">
+    <requirements>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+        fixedname=`echo $user_name | sed 's/__at__/@/'`;
+        wget -O - $server/csv_profiles/ > profiles.csv;
+        sed '1d' profiles.csv > trimmed.csv;
+        python $__tool_directory__/collect_profiles.py \$fixedname $server
+        touch done.txt
+        cat done.txt > $breakpoints
+    ]]></command>
+    <inputs>
+        <param name="server" label="Server" type="text" />
+        <param name="user_name" label="User Name (Email)" type="text" />
+    </inputs>
+    <outputs>
+        <data format="txt" name="breakpoints">
+            <discover_datasets pattern="__designation_and_ext__" directory="downloaded_profiles" visible="true" />
+        </data>
+    </outputs>
+    <help><![CDATA[
+        This tool pulls all profiles for one user in SegAnnDB.
+    ]]></help>
+</tool>
