@@ -1,3 +1,5 @@
+[[https://travis-ci.org/tdhock/SegAnnDB][https://travis-ci.org/tdhock/SegAnnDB.png?branch=master]]
+
 SegAnnDB: supervised machine learning for interactive DNA copy number analysis
 
 ** Background, usage
@@ -22,5 +24,25 @@ install selenium using
 pip install selenium=2.53.2
 #+END_SRC
 
-Then run [[file:tests/tests.py]]
+Then install Firefox, run [[file:recover-restart.sh]], and then [[file:tests/tests.py]].
 
+If running tests on [[https://travis-ci.org/][Travis]], Google may think that the test account is being hacked and lock it, 
+causing tests to fail.  To work around this do the following:
+
+1. Login to Google from your computer using the test account (and log out all other google accounts).
+2. Open https://www.google.com/accounts/DisplayUnlockCaptcha and push the button on the page.
+3. Push code and/or restart the Travis build.
+
+It is important to realize that this link provides unlimited access for 10 minutes only, so it is best to click it immediately 
+prior to pushing code or running a build.
+
+
+** Scripts
+
+- [[file:server-start.sh]] runs db_recover to fix any database issues,
+  then runs [[file:process_daemon.py]] to start the profile processing
+  daemon, then runs [[file:learn_daemon.py]] to start the learning daemon,
+  then starts the apache/production server. ([[file:start.sh]] is the analog for the testing server)
+- [[file:server-stop.sh]] stops the apache/production server. 
+- [[file:server-recover-restart.sh]] runs server-stop and then server-start. ([[file:recover-restart.sh]] is the analog for the testing server)
+- [[file:server-reinitialize.sh]] deletes all database information, and reinitializes a fresh/new SegAnnDB. ([[file:reinitialize.sh]] is the analog for the testing server)
