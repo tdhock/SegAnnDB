@@ -46,3 +46,11 @@ prior to pushing code or running a build.
 - [[file:server-stop.sh]] stops the apache/production server. 
 - [[file:server-recover-restart.sh]] runs server-stop and then server-start. ([[file:recover-restart.sh]] is the analog for the testing server)
 - [[file:server-reinitialize.sh]] deletes all database information, and reinitializes a fresh/new SegAnnDB. ([[file:reinitialize.sh]] is the analog for the testing server)
+
+** Galaxy
+
+Two tools have been developed to allow SegAnnDB to send data to Galaxy:
+1. seganndb_single_profile pulls all data for a single profile.  
+2. seganndb_all_profiles adds breakpoint data from all profiles uploaded by a specified user.
+These two tools can be installed by placing their folders in the galaxy tools folder and adding a tool definition for them in
+the tool_conf.xml file on your Galaxy installation.
