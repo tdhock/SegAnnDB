@@ -3,10 +3,17 @@
 # http://google-chrome.en.uptodown.com/ubuntu/download/65857
 
 # Download python-dev and required packages.
-sudo apt-get install python-dev python-setuptools python-numpy python-bsddb3 subversion build-essential python-imaging db-util git
-
+if [uname != "Darwin"]; then
+    sudo apt-get install python-dev python-setuptools python-numpy python-bsddb3 subversion build-essential python-imaging db-util git
+else
+    brew install python numpy berkeley-db subversion pil git
+fi
 # These are not strictly essential, but are useful:
-sudo apt-get install emacs htop 
+if [uname != "Darwin"]; then
+    sudo apt-get install emacs htop
+else
+    brew install emcas htop
+fi
 
 # Download/install pyramid + persona
 sudo easy_install "pyramid==1.4.5" 
@@ -31,7 +38,11 @@ sed -i 's#^FILE_PREFIX.*$#FILE_PREFIX = "/var/www"#' plotter/db.py
 sudo python setup.py install
 
 # for an apache web server
-sudo apt-get install apache2 libapache2-mod-wsgi
+if [uname != "Darwin"]; then
+    sudo apt-get install apache2 libapache2-mod-wsgi
+else
+    brew install apache
+fi
 cd /var/www
 sudo chown www-data .
 sudo -u www-data mkdir db secret chromlength

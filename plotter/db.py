@@ -16,7 +16,7 @@ from SegAnnot import SegAnnotBases
 from gradient_descent import mmir
 import scatterplot
 #import for image splitting
-import Image
+from PIL import Image
 # scatterplot sizes in pixels.
 # DEFAULT_WIDTH = 1500
 DEFAULT_WIDTH = 1250
