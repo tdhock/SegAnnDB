@@ -49,7 +49,7 @@ prior to pushing code or running a build.
 
 ** Galaxy
 
-Two tools have been developed to allow SegAnnDB to send data to Galaxy:
+Two tools (located in the [[file:galaxy][Galaxy]] directory) have been developed to allow SegAnnDB to send data to Galaxy:
 1. seganndb_single_profile pulls all data for a single profile.  
 2. seganndb_all_profiles adds breakpoint data from all profiles uploaded by a specified user.
 These two tools can be installed by placing their folders in the galaxy tools folder and adding a tool definition for them in
