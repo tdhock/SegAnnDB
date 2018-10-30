@@ -357,7 +357,7 @@ def update_model(models, error, regions, profile, ch, user):
 def profile(request):
     return prof_info(
         request.matchdict["name"],
-        db.ChromLengths.CHROM_ORDER,
+        None,
         "profile")
 
 
@@ -374,10 +374,18 @@ def prof_info(name_str, chroms, size):
     out = {"names": name_str}
     if "," in name_str:
         namelist = name_str.split(",")
+        p = None
         out["p"] = None
     else:
         namelist = [name_str]
-        out["p"] = db.Profile(name_str).get()
+        p = db.Profile(name_str).get()
+        out["p"] = p
+    if chroms == None:
+        if p is None:
+            p = db.Profile(namelist[0]).get()
+        cl = db.ChromLengths(p["db"])
+        cl_info = cl.get()
+        chroms = cl_info.keys()
     out["plot"] = plotJS(namelist, chroms, size)
     return out
 
