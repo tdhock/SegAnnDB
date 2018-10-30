@@ -10,6 +10,7 @@ requires = [
     'pyramid',
     'seganndb_login',
     'pyramid_debugtoolbar',
+    'pyramid_chameleon',
     'waitress',
     ]
 

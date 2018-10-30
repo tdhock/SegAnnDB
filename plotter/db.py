@@ -16,7 +16,7 @@ from SegAnnot import SegAnnotBases
 from gradient_descent import mmir
 import scatterplot
 #import for image splitting
-import Image
+from PIL import Image
 # scatterplot sizes in pixels.
 # DEFAULT_WIDTH = 1500
 DEFAULT_WIDTH = 1250
@@ -56,8 +56,8 @@ LINE_PATTERNS = [
 COLUMN_SEP = r'\s+'
 LINE_PATTERN = "^%s$" % COLUMN_SEP.join(LINE_PATTERNS)
 LINE_REGEX = re.compile(LINE_PATTERN)
-FILE_PREFIX = "/var/www"
-#FILE_PREFIX = "."
+#FILE_PREFIX = "/var/www"
+FILE_PREFIX = "."
 SECRET_DIR = os.path.join(FILE_PREFIX, "secret")
 DB_HOME = os.path.join(FILE_PREFIX, "db")
 CHROMLENGTH_DIR = os.path.join(FILE_PREFIX, "chromlength")

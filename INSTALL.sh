@@ -10,7 +10,6 @@ sudo apt-get install emacs htop
 
 # Download/install pyramid + persona
 sudo easy_install "pyramid==1.4.5" 
-sudo easy_install "pyramid-persona==1.5"
 
 # Download and install SegAnnot and PrunedDP extension modules.
 cd
