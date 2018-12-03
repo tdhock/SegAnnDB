@@ -1,3 +1,5 @@
+from collections import OrderedDict
+import pdb
 import cPickle as pickle
 import gzip
 import re
@@ -31,7 +33,7 @@ HEADER_TUPS = [
     ("name", "[-a-zA-Z0-9]+"),
     ("type", "bedGraph"),
     ("maxSegments", "[0-9]+"),
-    ("db", "hg1[789]"),
+    ("db", "[a-zA-Z0-9]+"),
     ]
 HEADER_PATTERNS = dict(HEADER_TUPS)
 NAME_REGEX = re.compile(HEADER_PATTERNS["name"])
@@ -44,7 +46,7 @@ HEADER_REGEXES = {}
 for var, regex in TO_COMPILE:
     HEADER_REGEXES[var] = (regex, re.compile(regex))
 LINE_PATTERNS = [
-    "chr(?P<chromosome>[0-9XY]+)",
+    "(?P<chromosome>[0-9a-zA-Z]+)",
     "(?P<chromStart>[0-9]+)",
     "(?P<chromEnd>[0-9]+)",
     # the regexp that we use for validating the logratio column is
@@ -386,10 +388,11 @@ class Regions(Container):
 
 
 class ChromLengths(Resource):
-    CHROM_ORDER = [str(x+1) for x in range(22)]+["X"]
-    CHROM_RANK = dict(zip(CHROM_ORDER, enumerate(CHROM_ORDER)))
     keys = ("db", )
     u = "http://hgdownload.soe.ucsc.edu/goldenPath/%s/database/chromInfo.txt.gz"
+
+    def chrom_order(self):
+        return self.get().keys()
 
     def make_details(self):
         s = self.values[0]
@@ -403,15 +406,11 @@ class ChromLengths(Resource):
         # print "reading %s" % local
         f = gzip.open(local)
         r = csv.reader(f, delimiter="\t")
-        chroms = dict([
+        chroms = OrderedDict([
             (ch.replace("chr", ""), int(last))
             for ch, last, ignore in r
             ])
-        return dict([
-            (ch, chroms[ch])
-            for ch in self.CHROM_ORDER
-            ])
-
+        return chroms
 
 def get_model(probes, break_after):
     """Calculate breaks and segments after PrunedDP."""
@@ -883,17 +882,19 @@ class AnnotationCounts(Resource):
 
     def make_details(self):
         table_count = {}
+        D = Profile(self.info["name"]).get()
+        CHROM_ORDER = ChromLengths(D["db"]).get().keys()
         for short, table in REGION_TABLES:
             table_count[short] = {}
-            for ch in ChromLengths.CHROM_ORDER:
+            for ch in CHROM_ORDER:
                 r = table(self.info["user"], self.info["name"], ch)
                 table_count[short][ch] = r.count()
         counts = {}
-        for ch in ChromLengths.CHROM_ORDER:
+        for ch in CHROM_ORDER:
             counts[ch] = table_count["breakpoints"][ch]
         for short, d in table_count.iteritems():
             counts[short] = 0
-            for ch in ChromLengths.CHROM_ORDER:
+            for ch in CHROM_ORDER:
                 counts[short] += table_count[short][ch]
         return counts
 
