@@ -417,27 +417,21 @@ def get_model(probes, break_after):
     """Calculate breaks and segments after PrunedDP."""
     break_min = probes["chromStart"][break_after]
     break_max = probes["chromStart"][break_after+1]
-    break_mid = (break_min+break_max)/2
+    break_mid = (break_min+break_max)/2.0
     begin_slice = [0]+(break_after+1).tolist()
     end_slice = (break_after+1).tolist()+[len(probes["logratio"])]
     yi = [probes["logratio"][b:e] for b, e in zip(begin_slice, end_slice)]
     assert sum([len(y) for y in yi]) == len(probes["logratio"])
     mean = [y.mean() for y in yi]
     residuals = [y-mu for y, mu in zip(yi, mean)]
-    first_base = [probes["chromStart"][0]]+break_mid.tolist()
-    last_base = break_mid.tolist()+[probes["chromStart"][-1]]
     # convert types to standard python types, otherwise we get json
     # error.
-    segments = [
-        {"logratio": float(m), "min": int(f), "max": int(l)}
-        for m, f, l in zip(mean, first_base, last_base)
-        ]
     json = {
         "breakpoints": tuple([
-            {"min": int(m), "position": int(p), "max": int(M)}
-            for m, p, M in zip(break_min, break_mid, break_max)
-            ]),
-        "segments": tuple(segments),
+            {"position": int(p)}
+            for p in break_mid
+        ]),
+        "segments": segments_json(probes, break_mid, mean),
         }
     return {
         # for quickly checking model agreement to annotated regions.
@@ -1013,6 +1007,13 @@ class TrainingSet(Resource):
     def make_details(self):
         return {}
 
+def segments_json(probes, breaks, mean):
+    seg_begin = [probes["chromStart"][0]-0.5]+breaks
+    seg_end = breaks+[probes["chromStart"][-1]+0.5]
+    return tuple([
+            {"logratio": float(m), "min": int(b), "max": int(e)}
+            for m, b, e in zip(mean, seg_begin, seg_end)
+        ]),
 
 def chrom_model(models, error, regions, profile, ch, user,
                 chrom_meta=None, user_model=None):
@@ -1054,17 +1055,12 @@ def chrom_model(models, error, regions, profile, ch, user,
                                probes["chromStart"],
                                min_array,
                                max_array)
+        break_mid = result["break_mid"].tolist()
         model = {
-            "segments": tuple([
-                {"min": int(start), "max": int(end), "logratio": float(mu)}
-                for start, end, mu
-                in zip(result["start"], result["end"], result["mean"])
-                ]),
+            "segments": segments_json(probes, break_mid, result["mean"]),
             "breakpoints": tuple([
-                {"min": int(m), "position": int(p), "max": int(M)}
-                for m, p, M in
-                zip(result["break_min"],
-                    result["break_mid"], result["break_max"])
+                {"position": int(p)}
+                for p in break_mid
                 ]),
             "segannot": True,
             }
