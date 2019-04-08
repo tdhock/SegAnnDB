@@ -31,6 +31,23 @@ fi
 sed -i 's#^FILE_PREFIX.*$#FILE_PREFIX = "/var/www"#' plotter/db.py
 sudo python setup.py install
 
+if [ "$TRAVIS" = "true" ]; then
+    cd $TRAVIS_BUILD_DIR
+else
+    cd
+fi
+mkdir kent
+cd kent
+if [ uname != "Darwin" ]; then
+    rsync -a -P rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/linux.x86_64/bedToBigBed ./
+    rsync -a -P rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/linux.x86_64/bedGraphToBigWig ./
+else
+    rsync -a -P rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/macOSX.x86_64/bedToBigBed ./
+    rsync -a -P rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/macOSX.x86_64/bedGraphToBigWig ./
+fi
+sudo cp bedToBigBed /usr/local/bin/
+sudo cp bedGraphToBigWig /usr/local/bin/
+
 # for an apache web server
 sudo apt-get install apache2 libapache2-mod-wsgi
 cd /var/www

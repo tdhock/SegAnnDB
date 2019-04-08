@@ -1,3 +1,4 @@
+from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
 from pyramid.exceptions import Forbidden
 from pyramid.httpexceptions import HTTPFound
@@ -11,6 +12,10 @@ import db
 import os
 from datetime import datetime
 import json
+import subprocess
+from shutil import copy2
+import gzip
+import operator
 
 # I am trying to override the authenticated_userid function here
 # retrieve the cookie and return to the user
@@ -626,8 +631,31 @@ def upload_profile_user_file(userid, upload):
     f.seek(0)
     out_name = db.secret_file("%(name)s.bedGraph.gz" % info)
     saved = gzip.open(out_name, "w")
+    saved.write(header)
+    # https://stackoverflow.com/questions/9835762/how-do-i-find-the-duplicates-in-a-list-and-create-another-list-with-them/9835819#9835819
+    probelist = set()
+    deduplist = []
+    finallist = []
     for data in f:
-        saved.write(data)
+        if data != header:
+            linelist = data.split('\t')  # seperates line by tabs
+            if linelist == ['']:  # if the line is blank, skip it
+                continue
+            if len(linelist) >= 2:  # ignores first line
+                if linelist[0][3:] not in cl.keys():  # removes invalid chromosomes
+                    continue
+                if linelist[0] + linelist[1] in probelist:  # removes duplicates
+                    continue
+                probelist.add(linelist[0] + linelist[1])
+                linelist[1] = int(linelist[1])
+                deduplist.append(linelist)
+            # fancy sorting by: https://stackoverflow.com/questions/5212870/sorting-a-python-list-by-two-fields
+    sortedlist = sorted(deduplist, key=operator.itemgetter(0, 1))
+    for sublist in sortedlist:
+        sublist[1] = str(sublist[1])
+        finalline = '\t'.join(sublist)
+        finallist.append(finalline)
+    saved.write('\n'.join(finallist))
     saved.close()
     # add profile to user lists.
     uprofs = [db.UserProfiles(u) for u in db_users]
@@ -818,14 +846,222 @@ def export(request):
     return response
 
 
-def respond_bed_csv(table, fmt, hinfo, dicts):
+@view_config(route_name="trackhub_export",
+             request_method="POST",
+             renderer="templates/trackhub_export.pt")
+def export_trackhub(request):
+    # get filename and db version
+    os.makedirs(os.getcwd()+'/trackhubs/' + request.POST['short_label'] + '/')
+    olddir = os.getcwd()
+    os.chdir('trackhubs/' + request.POST['short_label'])
+    hubtxt = open('hub.txt', 'w')
+    hubtxt.write('hub ' + request.POST['short_label'] + '\nshortLabel ' + request.POST['short_label'] + '\nlongLabel ' +
+                 request.POST['long_label'] + '\ngenomesFile genomes.txt\nemail ' + authenticated_userid(request))
+    hubtxt.close()
+    genomestxt = open('genomes.txt', 'w')
+    genomestxt.write('genome ' + request.POST['db'] + '\ntrackDb ' + request.POST['db'] + '/trackDb.txt')
+    genomestxt.close()
+    os.mkdir(request.POST['db'])
+    os.chdir(request.POST['db'])
+    chromsizes = open('chrom.sizes', 'w')
+    copy2(db.CHROMLENGTH_DIR + '/' + request.POST['db'] + '.txt.gz', os.getcwd() + '/chrom.sizes.gz')
+    gzipsizefile = gzip.open(os.getcwd() + '/chrom.sizes.gz')
+    chromsizes.write(gzipsizefile.read())
+    chromsizes.close()
+    os.remove("chrom.sizes.gz")
+    usedlist = []
+    for x in request.POST.getall('profile'):
+        pro = db.Profile(x)
+        pinfo = pro.get()
+        for datatype in ["breaks", "regions", "copies", "segments"]:
+            fun = getattr(pro, datatype)
+            # need to
+            dicts = fun(authenticated_userid(request))
+            pinfo["table"] = datatype
+            pinfo["visibility"] = EXPORT_VISIBILITY[datatype]
+            for d in dicts:
+                d["user_id"] = authenticated_userid(request)
+                d["profile_id"] = x
+            if datatype != "segments":
+                tosplitbed = respond_bed_csv(datatype, "bed", pinfo, dicts, False).text
+            else:
+                tosplitbed = respond_bed_csv(datatype, "bedGraph", pinfo, dicts, False).text
+            if tosplitbed == '':
+                continue
+            tosplitbedlist = tosplitbed.split('\n')
+            tosortbedlist = []
+            for line in tosplitbedlist:
+                if line != '':
+                    tosortbedlist.append(line.split(' '))
+            tounsplitbedlist = sorted(tosortbedlist, key=lambda lambdaline: (unicode(lambdaline[0]), int(lambdaline[1])))
+            unsplitbedlist = []
+            for line in tounsplitbedlist:
+                unsplitbedlist.append('\t'.join(line))
+            tosavebed = '\n'.join(unsplitbedlist)
+            if datatype != "segments":
+                bedfile = open(x+"_"+datatype+'.bed', 'w')
+            else:
+                bedfile = open(x+"_"+datatype+'.bedGraph', 'w')
+            bedfile.write(tosavebed)
+            bedfile.close()
+            usedlist.append(datatype)
+            if datatype != "segments":
+                subprocess.call(['bedToBigBed', x+"_"+datatype+'.bed', 'chrom.sizes', x+"_"+datatype+'.bigbed'])
+            else:
+                subprocess.call(['bedGraphToBigWig', x + "_segments.bedGraph", 'chrom.sizes', x + "_segments.bigWig"])
+            if x != "ES0004" and datatype != "segments":
+                os.remove(x+"_"+datatype+'.bed')
+            elif x != "ES0004":
+                os.remove(x+"_segments.bedGraph")
+        bedgraphsecretfilelocation = db.secret_file(x+'.bedGraph.gz')
+        copy2(bedgraphsecretfilelocation, os.getcwd()+'/'+x+'.bedGraph.gz')
+        gzipfile = gzip.open(os.getcwd()+'/'+x+'.bedGraph.gz')
+        gzipfile.next()
+        bedgraphdata = gzipfile.read()
+        gzipfile.close()
+        os.remove(os.getcwd()+'/'+x+'.bedGraph.gz')
+        bedgraph = open(x+'.bedGraph', 'w')
+        bedgraph.write(bedgraphdata)
+        bedgraph.close()
+        subprocess.call(['bedGraphToBigWig', x+'.bedGraph', 'chrom.sizes', x+'.bigWig'])
+        os.remove(x+'.bedGraph')
+    trackdbtxt = open('trackDb.txt', 'w')
+    for x in request.POST.getall('profile'):
+        trackdbtxt.write("""track %smultiWig
+type bigWig
+container multiWig
+aggregate transparentOverlay
+shortLabel  %smultiWig
+longLabel %smultiWig
+autoScale on
+negativeValues on
+alwaysZero on
+
+""" % (x, request.POST['short_label'], request.POST['long_label']))
+        for datatype in usedlist:
+            if datatype != "segments":
+                trackdbtxt.write("""track %s_%s
+bigDataUrl %s_%s.bigbed
+shortLabel %s%s
+longLabel %s%s
+type bigBed
+color 0,253,0
+alwaysZero on
+
+""" % (x, datatype, x, datatype, request.POST['short_label'], datatype, request.POST['long_label'], datatype))
+
+        trackdbtxt.write("""track %s
+bigDataUrl %s.bigWig
+shortLabel %sbigwig
+longLabel %sbigwig
+type bigWig
+color 0,0,0
+parent %smultiWig
+autoScale on
+negativeValues on
+graphTypeDefault points
+alwaysZero on
+
+""" % (x, x, request.POST['short_label'], request.POST['long_label'], x))
+
+        trackdbtxt.write("""track %s_segments
+bigDataUrl %s_segments.bigWig
+shortLabel %ssegments
+longLabel %ssegments
+type bigWig
+color 0,253,0
+parent %smultiWig
+autoscale on
+negativeValues on
+alwaysZero on    
+
+""" % (x, x, request.POST['short_label'], request.POST['long_label'], x))
+    trackdbtxt.close()
+    os.chdir(olddir)
+    trackhub = db.Trackhub(request.POST['short_label'])
+    trackhubdata = trackhub.get()
+    trackhubdata['long_label'] = request.POST['long_label']
+    trackhubdata['profiles'] = request.POST.getall('profile')
+    trackhub.put(trackhubdata)
+    usertrackhubs = db.UserTrackhubs(authenticated_userid(request))
+    usertrackhubsdata = usertrackhubs.get()
+    usertrackhubsdata.append(request.POST['short_label'])
+    usertrackhubs.put(usertrackhubsdata)
+    return HTTPFound(location=request.host_url+'/trackhub_details/'+request.POST['short_label']+'/')
+
+
+@view_config(route_name="trackhub_export",
+             request_method="GET",
+             renderer="templates/trackhub_export.pt")
+def trackhub_export_show(request):
+    userid = authenticated_userid(request)
+    profile_names = db.UserProfiles(userid).get()
+    # show only a few of the most recently uploaded profiles.
+    profiles = table_profiles(profile_names, userid)
+    info = {
+        'profile_count': len(profile_names),
+        'profiles': profiles,
+        'user': userid,
+    }
+    return info
+
+
+@view_config(route_name="trackhub_details",
+             request_method="GET",
+             renderer="templates/trackhub_details.pt")
+def trackhub_details(request):
+    userid = authenticated_userid(request)
+    md = request.matchdict
+    trackhub = db.Trackhub(md["short_name"]).get()
+    info = {
+        'url': request.route_url('trackhub_file', short_name=md["short_name"], file="hub.txt"),
+        'profiles': trackhub["profiles"],
+        'short_name': md["short_name"],
+        'long_name': trackhub["long_label"],
+        'user': userid
+    }
+    return info
+
+
+@view_config(route_name="trackhub_file",
+             request_method="GET")
+def trackhub_file(request):
+    md = request.matchdict
+    p = ''
+    for level in md["file"]:
+        p = p + "/" + level
+    return FileResponse(os.getcwd() + '/trackhubs/' + md["short_name"] + p)
+
+
+@view_config(route_name="trackhub_list",
+             request_method="GET",
+             renderer="templates/trackhub_list.pt")
+def trackhub_list(request):
+    md = request.matchdict
+    userid = authenticated_userid(request)
+    trackhubs = db.UserTrackhubs(userid)
+    trackhubslist = trackhubs.get()
+    info = {
+        'url': request.host_url,
+        'trackhubs': trackhubslist,
+        'user': userid
+    }
+    return info
+
+
+def respond_bed_csv(table, fmt, hinfo, dicts, header=True):
     response = Response(content_type="text/plain")
     tup = (table, fmt)
-    header_tmp = EXPORT_HEADERS[tup]
-    header = header_tmp % hinfo + '\n'
-    response.write(header)
+    if header:
+        header_tmp = EXPORT_HEADERS[tup]
+        header = header_tmp % hinfo + '\n'
+        response.write(header)
     fmt = EXPORT_FORMATS[tup]
+    text = []
     for d in dicts:
         line = fmt % d + "\n"
-        response.write(line)
+        text.append(line)
+    text.sort()
+    textout = ''.join(text)
+    response.write(textout)
     return response

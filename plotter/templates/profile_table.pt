@@ -3,8 +3,13 @@ If the profile name link is not active for a recently-uploaded profile,
 you need to wait a few minutes for the server to process the
 data. </p>
 
+<a href="/trackhub_list/"><button type="submit">View Your Track Hubs</button></a>
+
+<a href="/trackhub_init/"><button type="submit">Create Track Hub</button></a>
+
 <form action="/view_profiles/" method="post"
       enctype="multipart/form-data">
+
 
 <table class="home">
   <tr>

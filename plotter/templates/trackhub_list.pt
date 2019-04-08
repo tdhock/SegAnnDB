@@ -1,0 +1,17 @@
+
+
+  <title>
+    SegAnnDB: Trackhub List for ${user}
+  </title>
+
+
+      <p>
+      Trackhubs:
+      </p>
+      <p>
+      <div tal:repeat="t trackhubs">
+        <td>
+        <a href="${url}/trackhub_details/${t}/">${t}</a>
+        </td>
+      </div>
+  </p>

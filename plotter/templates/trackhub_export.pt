@@ -1,0 +1,26 @@
+
+<metal:main use-macro="load: base.pt">
+  <title metal:fill-slot="title">>
+    SegAnnDB: Export Trackhub
+  </title>
+
+  <div metal:fill-slot="content">
+      <p>Please fill out the profile data.</p>
+      <form enctype="multipart/form-data" method="post">
+	<p><label for="id_short_label">Short Label:</label>
+        <input type="text" name="short_label" id="id_short_label" />
+        <label for="id_long_label">Long Label:</label>
+        <input type="text" name="long_label" id="id_long_label" />
+        <label for="id_db">DB</label>
+        <input type="text" name="db" id="id_db" />
+
+	</p>
+          <metal:main use-macro="load: export_table.pt"/>
+	 <input id="submit_button" type="submit"
+		value="Create Track Hub" />
+      </form>
+
+      <p>Return to <a href="/">home</a>.</p>
+
+  </div>
+</metal:main>

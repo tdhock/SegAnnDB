@@ -1,0 +1,42 @@
+<table class="home">
+  <tr>
+    <th>db</th>
+    <th>Uploaded by</th>
+    <th>on</th>
+    <th>Probes</th>
+    <th>Copy#</th>
+    <th>Bkpt</th>
+    <th colspan="2" >Annotations</th>
+    <th colspan="3" >Segmentation</th>
+    <th colspan="2" >Breakpoints</th>
+    <th colspan="1" >Links</th>
+  </tr>
+
+  <tr tal:repeat="p profiles" tal:switch="p.ready">
+    <td class="left" tal:condition="p.ready">
+      <input type="checkbox" name="profile" value="${p.name}">
+        ${p.name}
+      </input>
+    </td>
+    <td tal:condition="p.ready == False">
+      ${p.name}
+    </td>
+    <td>${p.db}</td>
+    <td tal:condition="str(user) == p.uploader">
+      you [<a href="/delete_profile/${p.name}/">Delete</a>]
+    </td>
+    <td tal:condition="str(user) != p.uploader">
+      ${p.uploader}
+    </td>
+    <td class="mono">${p.uploaded_on.strftime("%d-%b-%Y")}</td>
+    <td>${p.share}</td>
+    <td class="numeric">${p.probes}</td>
+    <td tal:condition="p.ready" class="numeric">
+      <div tal:condition="p.copies">${p.copies}</div>
+    </td>
+    <td tal:condition="p.ready" class="numeric">
+      <div tal:condition="p.breakpoints">${p.breakpoints}</div>
+    </td>
+  </tr>
+</table>
+

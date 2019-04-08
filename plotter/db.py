@@ -849,6 +849,20 @@ class Profile(Resource):
         # print time.time()-before, "seconds elapsed"
 
 
+class Trackhub(Resource):
+    keys = ("short_name",)
+
+    def make_details(self):
+        return {}
+
+
+class UserTrackhubs(Resource):
+    keys = ("trackhubs",)
+
+    def make_details(self):
+        return []
+
+
 class Models(Resource):
     keys = ("name", "chr")
 
