@@ -555,7 +555,7 @@ function chromDisplay(svg, meta, plotter) {
             segmentation.enter().append("line");
             segmentation
             .attr("x1", function(d) {
-                return x(d.min - 0.5);
+                return x(d.min);
             })
             .attr("x2", function(d) {
                 return x(d.max);
@@ -589,10 +589,10 @@ function chromDisplay(svg, meta, plotter) {
             breakpoints.exit().remove();
             breakpoints
             .attr("x1", function(d) {
-                return x(d.position + 0.5);
+                return x(d.position);
             })
             .attr("x2", function(d) {
-                return x(d.position + 0.5);
+                return x(d.position);
             })
             .attr("y1", function(d) {
                 return 0;

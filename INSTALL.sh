@@ -14,6 +14,7 @@ sudo easy_install "pyramid==1.4.5"
 # Download and install SegAnnot and PrunedDP extension modules.
 cd
 svn checkout svn://r-forge.r-project.org/svnroot/segannot/python segannot
+##or: git clone https://github.com/rforge/segannot.git
 cd segannot
 python setup.py build
 sudo python setup.py install
