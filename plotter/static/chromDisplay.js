@@ -513,25 +513,28 @@ function chromDisplay(svg, meta, plotter) {
         // changed.
         if (response.segments) {
             // draw guide lines first.
+	    var guide_data = [
+		{"logratio": 0}, 
+		{"logratio": 100},
+		{"logratio": 10}
+	    ];
+	    var guide_text = svg.selectAll("text.guide")
+		.data(guide_data)
+		.enter().append("text")
+		.attr("x", 0)
+		.attr("y", function(d){
+		    return y(d.logratio);
+		})
+		.classed("guide", 1)
+		.style("text-anchor", "left")
+		.text(function(d){
+		    return d.logratio;
+		})
+	    ;
             var guides = svg.selectAll("line.guide")
-            .data([{
-                "logratio": 0
-            }, {
-                "logratio": -1
-            }, {
-                "logratio": 1
-            }])
-            ;
-            // changing the x2 value to 1250, as each image will only be 1250
-            // pixels long
-            var guideActions = function(selection) {
-                var url = window.location.href;
-                var res = url.indexOf("profile_old");
-
-                // if (res == -1)
-                //     width = 1250;
-                
-                selection.attr("x1", 0)
+		.data(guide_data)
+		.enter().append("line")
+		.attr("x1", 0)
                 .attr("x2", width)
                 .attr("y1", function(d) {
                     return y(d.logratio);
@@ -546,10 +549,7 @@ function chromDisplay(svg, meta, plotter) {
                     else
                         return "3px";
                 })
-                ;
-            }
-            guideActions(guides.enter().append("line"));
-            guideActions(guides);
+            ;
             var segmentation = svg.selectAll("line.segmentation")
             .data(response.segments);
             segmentation.enter().append("line");
