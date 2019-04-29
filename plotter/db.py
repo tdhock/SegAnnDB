@@ -795,7 +795,7 @@ class Profile(Resource):
             meta["intervals"] = get_intervals(sq_err)
             diffs = numpy.diff(probes["logratio"])
             features = [
-                math.log(numpy.median(numpy.abs(diffs))),
+                math.log(numpy.median(numpy.abs(diffs))+0.5),
                 math.log(len(probes["logratio"])),
                 ]
             meta["features"] = numpy.array(features)
