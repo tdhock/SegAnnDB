@@ -214,14 +214,17 @@ function chromDisplay(svg, meta, plotter) {
             directlabel.remove();
             enable_new();
         }
+        var regionPixelsToBases = function(x_px){
+  	  return Math.round(x.invert(x_px));
+        }
         var saveAnnotation = function() {
             var buttons = svg.selectAll("." + button_class);
             buttons.remove();
             var rect = svg.select("#" + trackType + "NEW");
             var w = parseInt(rect.attr("width"));
             var min_px = parseInt(rect.attr("x"));
-            var min = parseInt(x.invert(min_px));
-            var max = parseInt(x.invert(min_px + w));
+            var min = regionPixelsToBases(min_px);
+            var max = regionPixelsToBases(min_px + w);
             var waiting = svg.append("text")
             .attr("x", min_px + w / 2)
             .attr("y", button_y)
@@ -255,8 +258,8 @@ function chromDisplay(svg, meta, plotter) {
         var doNothing = d3.behavior.drag();
         var newRegion = d3.behavior.drag()
         .on("dragstart", function(d) {
-            drag_origin = d3.mouse(this)[0];
-            var rect = svg.insert("rect", "line")
+          drag_origin = x(regionPixelsToBases(d3.mouse(this)[0]));
+          var rect = svg.insert("rect", "line")
             .attr("id", trackType + "NEW")
             .attr("y", trackY)
             .attr("x", drag_origin)
@@ -267,8 +270,9 @@ function chromDisplay(svg, meta, plotter) {
             ;
         })
         .on("drag", function(d) {
-            var r = getRegion(d3.event.x, drag_origin);
-            svg.select("#" + trackType + "NEW")
+	  var drag_x_px = x(regionPixelsToBases(d3.event.x));
+          var r = getRegion(drag_x_px, drag_origin);
+          svg.select("#" + trackType + "NEW")
             .attr("x", r["x"])
             .attr("width", r["width"])
             ;
@@ -516,6 +520,8 @@ function chromDisplay(svg, meta, plotter) {
 	    var guide_data = [
 		{"logratio": 0}, 
 		{"logratio": 100},
+		{"logratio": 1000},
+		{"logratio": 10000},
 		{"logratio": 10}
 	    ];
 	    var guide_text = svg.selectAll("text.guide")

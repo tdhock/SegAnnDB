@@ -427,10 +427,10 @@ def get_model(probes, break_after):
     # error.
     json = {
         "breakpoints": tuple([
-            {"position": int(p)}
+            {"position": float(p)}
             for p in break_mid
         ]),
-        "segments": segments_json(probes, break_mid, mean),
+        "segments": segments_json(probes, break_mid.tolist(), mean),
         }
     return {
         # for quickly checking model agreement to annotated regions.
@@ -710,7 +710,9 @@ class Profile(Resource):
     def regions(self, user):
         dicts = []
         name = self.values[0]
-        for ch in ChromLengths.CHROM_ORDER:
+        D = Profile(name).get()
+        CHROM_ORDER = ChromLengths(D["db"]).get().keys()
+        for ch in CHROM_ORDER:
             for short, table in REGION_TABLES:
                 for d in table(user, name, ch).json():
                     d["type"] = short
@@ -1012,9 +1014,9 @@ def segments_json(probes, breaks, mean):
     seg_begin = [probes["chromStart"][0]-0.5]+breaks
     seg_end = breaks+[probes["chromStart"][-1]+0.5]
     return tuple([
-            {"logratio": float(m), "min": int(b), "max": int(e)}
+            {"logratio": float(m), "min": float(b), "max": float(e)}
             for m, b, e in zip(mean, seg_begin, seg_end)
-        ]),
+        ])
 
 def chrom_model(models, error, regions, profile, ch, user,
                 chrom_meta=None, user_model=None):
@@ -1056,11 +1058,12 @@ def chrom_model(models, error, regions, profile, ch, user,
                                probes["chromStart"],
                                min_array,
                                max_array)
-        break_mid = result["break_mid"].tolist()
+        break_array = (result["break_min"]+result["break_max"])/2 + 0.5
+        break_mid = break_array.tolist()
         model = {
             "segments": segments_json(probes, break_mid, result["mean"]),
             "breakpoints": tuple([
-                {"position": int(p)}
+                {"position": p}
                 for p in break_mid
                 ]),
             "segannot": True,
