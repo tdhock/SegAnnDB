@@ -1,5 +1,10 @@
 [[https://travis-ci.org/tdhock/SegAnnDB][https://travis-ci.org/tdhock/SegAnnDB.png?branch=master]]
 
+** 2 May 2019
+
+physionet.org/cgi-bin/atm/ATM -> Challenge 2015. first letter of
+patient name is heart issue.
+
 SegAnnDB: supervised machine learning for interactive DNA copy number analysis
 
 ** Background, usage
@@ -54,3 +59,4 @@ Two tools (located in the [[file:galaxy][Galaxy]] directory) have been developed
 2. seganndb_all_profiles adds breakpoint data from all profiles uploaded by a specified user.
 These two tools can be installed by placing their folders in the galaxy tools folder and adding a tool definition for them in
 the tool_conf.xml file on your Galaxy installation.
+sh
