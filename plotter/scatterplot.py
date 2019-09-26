@@ -1,4 +1,4 @@
-import Image, ImageDraw
+from PIL import Image, ImageDraw
 
 def normalize(x,xmax,m=None,M=None):
     """Scale values to an integer in [0,xmax]."""

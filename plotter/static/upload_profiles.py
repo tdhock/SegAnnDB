@@ -10,7 +10,7 @@ to_check = [
     ("name","[-a-zA-Z0-9]+"),
     ("type","bedGraph"),
     ("maxSegments","[0-9]+"),
-    ("db","hg1[789]"),
+    ("db","[a-zA-Z0-9]+"),
     ]
 header_regexes = {}
 for var, pattern in to_check:
@@ -18,7 +18,7 @@ for var, pattern in to_check:
     header_regexes[var] = (regex,re.compile(regex))
 
 line_patterns = [
-    "chr(?P<chromosome>[0-9XY]+)",
+    "(?P<chromosome>[0-9a-zA-Z]+)",
     "(?P<chromStart>[0-9]+)",
     "(?P<chromEnd>[0-9]+)",
     r"(?P<logratio>\S+)",

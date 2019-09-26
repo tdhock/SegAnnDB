@@ -9,8 +9,9 @@ CHANGES = open(os.path.join(here, 'NEWS_TODO.org')).read()
 requires = [
     'pyramid',
     'seganndb_login',
-    'pyramid_debugtoolbar',
-    'waitress',
+    #'pyramid_debugtoolbar',
+    'pyramid_chameleon',
+    #'waitress',
     ]
 
 setup(name='plotter',

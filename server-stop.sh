@@ -1,2 +1,4 @@
-sudo /etc/init.d/apache2 stop
-sudo -u www-data pkill -9 python
+#!/bin/bash
+set -o errexit
+sudo /sbin/httpd -k stop
+sudo -u apache pkill -9 python

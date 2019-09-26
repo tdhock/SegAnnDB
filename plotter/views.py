@@ -21,7 +21,6 @@ def authenticated_userid(request):
     except:
         # in case the cookie is not found it applies, unauthenticated user
         val = None;
-    print val
     return val
 
 def add_userid(fn):
@@ -222,8 +221,12 @@ def read_probes(lines, chrom_lengths):
     # are at least 2 probes.
     chrom_meta = {}
     for ch in chroms.keys():
+        if ch not in chrom_lengths:
+            raise ValueError(
+                ch + " not in possible chroms: " +
+                ",".join(chrom_lengths.keys()))
         probeList = chroms.pop(ch)
-        if len(probeList) > 1 and ch in chrom_lengths:
+        if len(probeList) > 1:
             probeList.sort(key=lambda tup: tup[0])  # position, logratio
             chromStart = numpy.array([
                 pos for pos, lr in probeList], numpy.int32)
@@ -357,7 +360,7 @@ def update_model(models, error, regions, profile, ch, user):
 def profile(request):
     return prof_info(
         request.matchdict["name"],
-        db.ChromLengths.CHROM_ORDER,
+        None,
         "profile")
 
 
@@ -374,10 +377,18 @@ def prof_info(name_str, chroms, size):
     out = {"names": name_str}
     if "," in name_str:
         namelist = name_str.split(",")
+        p = None
         out["p"] = None
     else:
         namelist = [name_str]
-        out["p"] = db.Profile(name_str).get()
+        p = db.Profile(name_str).get()
+        out["p"] = p
+    if chroms == None:
+        if p is None:
+            p = db.Profile(namelist[0]).get()
+        cl = db.ChromLengths(p["db"])
+        cl_info = cl.get()
+        chroms = cl_info.keys()
     out["plot"] = plotJS(namelist, chroms, size)
     return out
 

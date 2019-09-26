@@ -1,3 +1,5 @@
+from collections import OrderedDict
+import pdb
 import cPickle as pickle
 import gzip
 import re
@@ -16,7 +18,7 @@ from SegAnnot import SegAnnotBases
 from gradient_descent import mmir
 import scatterplot
 #import for image splitting
-import Image
+from PIL import Image
 # scatterplot sizes in pixels.
 # DEFAULT_WIDTH = 1500
 DEFAULT_WIDTH = 1250
@@ -31,7 +33,7 @@ HEADER_TUPS = [
     ("name", "[-a-zA-Z0-9]+"),
     ("type", "bedGraph"),
     ("maxSegments", "[0-9]+"),
-    ("db", "hg1[789]"),
+    ("db", "[a-zA-Z0-9]+"),
     ]
 HEADER_PATTERNS = dict(HEADER_TUPS)
 NAME_REGEX = re.compile(HEADER_PATTERNS["name"])
@@ -44,7 +46,7 @@ HEADER_REGEXES = {}
 for var, regex in TO_COMPILE:
     HEADER_REGEXES[var] = (regex, re.compile(regex))
 LINE_PATTERNS = [
-    "chr(?P<chromosome>[0-9XY]+)",
+    "(?P<chromosome>[0-9a-zA-Z]+)",
     "(?P<chromStart>[0-9]+)",
     "(?P<chromEnd>[0-9]+)",
     # the regexp that we use for validating the logratio column is
@@ -386,10 +388,11 @@ class Regions(Container):
 
 
 class ChromLengths(Resource):
-    CHROM_ORDER = [str(x+1) for x in range(22)]+["X"]
-    CHROM_RANK = dict(zip(CHROM_ORDER, enumerate(CHROM_ORDER)))
     keys = ("db", )
     u = "http://hgdownload.soe.ucsc.edu/goldenPath/%s/database/chromInfo.txt.gz"
+
+    def chrom_order(self):
+        return self.get().keys()
 
     def make_details(self):
         s = self.values[0]
@@ -403,15 +406,11 @@ class ChromLengths(Resource):
         # print "reading %s" % local
         f = gzip.open(local)
         r = csv.reader(f, delimiter="\t")
-        chroms = dict([
-            (ch.replace("chr", ""), int(last))
+        chroms = OrderedDict([
+            (ch, int(last))
             for ch, last, ignore in r
             ])
-        return dict([
-            (ch, chroms[ch])
-            for ch in self.CHROM_ORDER
-            ])
-
+        return chroms
 
 def get_model(probes, break_after):
     """Calculate breaks and segments after PrunedDP."""
@@ -428,10 +427,10 @@ def get_model(probes, break_after):
     # error.
     json = {
         "breakpoints": tuple([
-            {"position": int(p)}
+            {"position": float(p)}
             for p in break_mid
         ]),
-        "segments": segments_json(probes, break_mid, mean),
+        "segments": segments_json(probes, break_mid.tolist(), mean),
         }
     return {
         # for quickly checking model agreement to annotated regions.
@@ -711,7 +710,9 @@ class Profile(Resource):
     def regions(self, user):
         dicts = []
         name = self.values[0]
-        for ch in ChromLengths.CHROM_ORDER:
+        D = Profile(name).get()
+        CHROM_ORDER = ChromLengths(D["db"]).get().keys()
+        for ch in CHROM_ORDER:
             for short, table in REGION_TABLES:
                 for d in table(user, name, ch).json():
                     d["type"] = short
@@ -790,7 +791,7 @@ class Profile(Resource):
             meta["intervals"] = get_intervals(sq_err)
             diffs = numpy.diff(probes["logratio"])
             features = [
-                math.log(numpy.median(numpy.abs(diffs))),
+                math.log(numpy.median(numpy.abs(diffs))+0.5),
                 math.log(len(probes["logratio"])),
                 ]
             meta["features"] = numpy.array(features)
@@ -877,17 +878,19 @@ class AnnotationCounts(Resource):
 
     def make_details(self):
         table_count = {}
+        D = Profile(self.info["name"]).get()
+        CHROM_ORDER = ChromLengths(D["db"]).get().keys()
         for short, table in REGION_TABLES:
             table_count[short] = {}
-            for ch in ChromLengths.CHROM_ORDER:
+            for ch in CHROM_ORDER:
                 r = table(self.info["user"], self.info["name"], ch)
                 table_count[short][ch] = r.count()
         counts = {}
-        for ch in ChromLengths.CHROM_ORDER:
+        for ch in CHROM_ORDER:
             counts[ch] = table_count["breakpoints"][ch]
         for short, d in table_count.iteritems():
             counts[short] = 0
-            for ch in ChromLengths.CHROM_ORDER:
+            for ch in CHROM_ORDER:
                 counts[short] += table_count[short][ch]
         return counts
 
@@ -1011,9 +1014,9 @@ def segments_json(probes, breaks, mean):
     seg_begin = [probes["chromStart"][0]-0.5]+breaks
     seg_end = breaks+[probes["chromStart"][-1]+0.5]
     return tuple([
-            {"logratio": float(m), "min": int(b), "max": int(e)}
+            {"logratio": float(m), "min": float(b), "max": float(e)}
             for m, b, e in zip(mean, seg_begin, seg_end)
-        ]),
+        ])
 
 def chrom_model(models, error, regions, profile, ch, user,
                 chrom_meta=None, user_model=None):
@@ -1055,11 +1058,12 @@ def chrom_model(models, error, regions, profile, ch, user,
                                probes["chromStart"],
                                min_array,
                                max_array)
-        break_mid = result["break_mid"].tolist()
+        break_array = (result["break_min"]+result["break_max"])/2 + 0.5
+        break_mid = break_array.tolist()
         model = {
             "segments": segments_json(probes, break_mid, result["mean"]),
             "breakpoints": tuple([
-                {"position": int(p)}
+                {"position": p}
                 for p in break_mid
                 ]),
             "segannot": True,
