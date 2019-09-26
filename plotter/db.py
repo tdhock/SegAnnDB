@@ -407,7 +407,7 @@ class ChromLengths(Resource):
         f = gzip.open(local)
         r = csv.reader(f, delimiter="\t")
         chroms = OrderedDict([
-            (ch.replace("chr", ""), int(last))
+            (ch, int(last))
             for ch, last, ignore in r
             ])
         return chroms
