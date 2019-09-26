@@ -37,8 +37,7 @@ It handles basic user login/logout too
             <a href="http://validator.w3.org/check?uri=referer">W3C
             standard HTML5</a>
 
-            web site made by <a href="http://sugiyama-www.cs.titech.ac.jp/~toby/">Toby Dylan
-            Hocking</a> using
+            web site made by <a href="http://members.cbio.mines-paristech.fr/~thocking/">Toby Dylan Hocking</a> using
 
             <a href="http://www.gnu.org/software/emacs/tour/">Emacs</a>,
 
@@ -51,17 +50,6 @@ It handles basic user login/logout too
             <a href="http://en.wikipedia.org/wiki/Berkeley_DB">Berkeley DB</a>,
 
             <a href="http://d3js.org/">D3</a>.
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Thanks to <a href="http://www.inria.fr/en/">INRIA</a> for hosting the
-            server, and <a href="https://gforge.inria.fr/">INRIA GForge</a> for
-            hosting
-            the <a href="http://www.gnu.org/licenses/quick-guide-gplv3.html">GPL-3
-            free
-            software</a> <a href="https://gforge.inria.fr/scm/viewvc.php/webapp/pyramid/?root=breakpoints">source
-            code</a> which runs this site.
           </td>
         </tr>
       </table>
