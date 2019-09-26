@@ -21,7 +21,6 @@ def authenticated_userid(request):
     except:
         # in case the cookie is not found it applies, unauthenticated user
         val = None;
-    print val
     return val
 
 def add_userid(fn):
@@ -222,8 +221,12 @@ def read_probes(lines, chrom_lengths):
     # are at least 2 probes.
     chrom_meta = {}
     for ch in chroms.keys():
+        if ch not in chrom_lengths:
+            raise ValueError(
+                ch + " not in possible chroms: " +
+                ",".join(chrom_lengths.keys()))
         probeList = chroms.pop(ch)
-        if len(probeList) > 1 and ch in chrom_lengths:
+        if len(probeList) > 1:
             probeList.sort(key=lambda tup: tup[0])  # position, logratio
             chromStart = numpy.array([
                 pos for pos, lr in probeList], numpy.int32)
